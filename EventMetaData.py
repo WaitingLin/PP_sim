@@ -1,7 +1,7 @@
 class EventMetaData:
     __slots__ = ["event_type", "preceding_event_count", "current_number_of_preceding_event",
                  "proceeding_event", "nlayer", "inputs", "outputs", 
-                 "position_idx"
+                 "position_idx", "window_id"
                 ]
     def __init__(self, event_type, position_idx, preceding_event_count, proceeding_event, nlayer, inputs, outputs):
         self.event_type = event_type
@@ -12,11 +12,12 @@ class EventMetaData:
         self.inputs  = inputs
         self.outputs = outputs
         self.position_idx = position_idx
+        self.window_id = None
 
     def __str__(self):
         return str({"type:": self.event_type, "pre_event number:": self.preceding_event_count,
                     "pro_event idx:": self.proceeding_event, "layer:": self.nlayer,
-                    "position:": self.position_idx, "preceding_event_count": self.preceding_event_count
+                    "position:": self.position_idx, "preceding_event_count": self.preceding_event_count, "window_id": window_id
                     })
     
     # event_type: edram_rd_ir
