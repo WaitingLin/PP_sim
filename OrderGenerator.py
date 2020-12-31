@@ -158,7 +158,7 @@ class OrderGenerator(object):
                     pad = self.model_info.pad[nlayer]
                     lh = window_h*strides - pad
                     lw = window_w*strides - pad
-                    window_id = (nlayer, lh, lw, lh + self.model_info.filter_h[nlayer], lw + self.model_info.filter_h[nlayer])
+                    window_id = (nlayer, lh, lw, lh + self.model_info.filter_h[nlayer], lw + self.model_info.filter_w[nlayer])
                     
                     # 兩個用來記錄event index的字典 # for dependency
                     pe_saa_event_dict = dict()
