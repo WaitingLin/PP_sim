@@ -489,6 +489,8 @@ class OrderGenerator(object):
                                         break
                                 for key in del_key:
                                     del total_read_data[key]
+                                
+                                filter_num = len(del_key)
                                     
                                #---Event: edram_rd---#
                                 eri_event_idx = len(self.Computation_order)
@@ -521,7 +523,7 @@ class OrderGenerator(object):
                                 pe_saa_event_idx = len(self.Computation_order)
                                 pe_saa_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
                                 preceding_count = 1
-                                saa_amount = len(wr_and_transfer_event_dict[pe_pos]) * len(pe_filter_processing[pe_pos]["aggregate"])
+                                saa_amount = len(edram_read_data) - filter_num
                                 pe_saa_inputs  = saa_amount
                                 pe_saa_outputs = 0
                                 event = EventMetaData("pe_saa", pe_saa_position_idx, preceding_count, [pe_saa_event_idx+1], nlayer, pe_saa_inputs, pe_saa_outputs)
@@ -532,7 +534,7 @@ class OrderGenerator(object):
                                 act_event_idx = len(self.Computation_order)
                                 act_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
                                 act_preceding_count = 1
-                                act_amount = len(pe_filter_processing[pe_pos]["aggregate"])
+                                act_amount = filter_num
                                 act_inputs  = act_amount
                                 act_outputs = 0
                                 event = EventMetaData("activation", act_position_idx, act_preceding_count, [], nlayer, act_inputs, act_outputs)
@@ -984,6 +986,8 @@ class OrderGenerator(object):
                             for key in del_key:
                                 del total_read_data[key]
 
+                            filter_num = len(del_key)
+
                            #---Event: edram_rd---#
                             eri_event_idx = len(self.Computation_order)
                             eri_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
@@ -1013,7 +1017,7 @@ class OrderGenerator(object):
                             pe_saa_event_idx = len(self.Computation_order)
                             pe_saa_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
                             preceding_count = 1
-                            saa_amount = len(wr_and_transfer_event_dict[pe_pos]) * len(pe_filter_processing[pe_pos]["aggregate"])
+                            saa_amount = len(edram_read_data) - filter_num 
                             pe_saa_inputs  = saa_amount
                             pe_saa_outputs = 0
                             event = EventMetaData("pe_saa", pe_saa_position_idx, preceding_count, [pe_saa_event_idx+1], nlayer, pe_saa_inputs, pe_saa_outputs)
@@ -1024,7 +1028,7 @@ class OrderGenerator(object):
                             act_event_idx = len(self.Computation_order)
                             act_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
                             act_preceding_count = 1
-                            act_amount = len(pe_filter_processing[pe_pos]["aggregate"])
+                            act_amount = filter_num
                             act_inputs  = act_amount
                             act_outputs = 0
                             event = EventMetaData("activation", act_position_idx, act_preceding_count, [], nlayer, act_inputs, act_outputs)
