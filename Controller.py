@@ -405,7 +405,8 @@ class Controller(object):
                     pe.Bus_energy          += self.hw_config.Energy_bus          * self.input_bit * num_data # bus
                     
                     # Trigger: pooling and edram
-                    finish_cycle = self.cycle_ctr + 1
+                    edram_read_cycles = event.outputs
+                    finish_cycle = self.cycle_ctr + edram_read_cycles
                     for proceeding_index in event.proceeding_event:
                         pro_event = self.Computation_order[proceeding_index]
                         pro_event.current_number_of_preceding_event += 1

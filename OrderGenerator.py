@@ -470,8 +470,14 @@ class OrderGenerator(object):
                                         total_read_data[data_pos].append(data)
                                     else:
                                         total_read_data[data_pos] = [data]
+                            tmp_data_num = 0
+                            for data_pos in total_read_data:
+                                tmp_data_num = max(len(total_read_data[data_pos]), tmp_data_num)
+                            
+                            edram_read_cycles = ceil(tmp_data_num/self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+
                             while(True):
-                                can_read_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
+                                can_read_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle * edram_read_cycles
                                 edram_read_data = []
                                 del_key = []
                                 for data_pos in total_read_data:
@@ -506,7 +512,7 @@ class OrderGenerator(object):
                                         self.Computation_order[event_idx].proceeding_event.append(eri_event_idx)
 
                                 eri_inputs  = edram_read_data
-                                eri_outputs = 0
+                                eri_outputs = edram_read_cycles
                                 event = EventMetaData("edram_rd", eri_position_idx, eri_preceding_count, [eri_event_idx+1], nlayer, eri_inputs, eri_outputs)
                                 self.Computation_order.append(event)
                                #---------------------#
@@ -957,8 +963,15 @@ class OrderGenerator(object):
                                     total_read_data[data_pos].append(data)
                                 else:
                                     total_read_data[data_pos] = [data]
+                        
+                        tmp_data_num = 0
+                        for data_pos in total_read_data:
+                            tmp_data_num = max(len(total_read_data[data_pos]), tmp_data_num)
+                        
+                        edram_read_cycles = ceil(tmp_data_num/self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+
                         while(True):
-                            can_read_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
+                            can_read_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle * edram_read_cycles
                             edram_read_data = []
                             del_key = []
                             for data_pos in total_read_data:
@@ -991,7 +1004,7 @@ class OrderGenerator(object):
                                     self.Computation_order[event_idx].proceeding_event.append(eri_event_idx)
                             
                             eri_inputs  = edram_read_data
-                            eri_outputs = 0
+                            eri_outputs = edram_read_cycles
                             event = EventMetaData("edram_rd", eri_position_idx, eri_preceding_count, [eri_event_idx+1], nlayer, eri_inputs, eri_outputs)
                             self.Computation_order.append(event)
                            #---------------------#
@@ -1134,7 +1147,7 @@ class OrderGenerator(object):
                         self.PE_dependency_idx[pe_id] = eri_event_idx
 
                         eri_inputs  = edram_read_data
-                        eri_outputs = 0
+                        eri_outputs = 1
                         event = EventMetaData("edram_rd", eri_position_idx, eri_preceding_count, [eri_event_idx+1], nlayer, eri_inputs, eri_outputs)
                         self.Computation_order.append(event)
                        #---------------------#

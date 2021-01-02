@@ -17,7 +17,7 @@ class EventMetaData:
     def __str__(self):
         return str({"type:": self.event_type, "pre_event number:": self.preceding_event_count,
                     "pro_event idx:": self.proceeding_event, "layer:": self.nlayer,
-                    "position:": self.position_idx, "preceding_event_count": self.preceding_event_count, "window_id": window_id
+                    "position:": self.position_idx, "preceding_event_count": self.preceding_event_count
                     })
     
     # event_type: edram_rd_ir
