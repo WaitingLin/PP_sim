@@ -303,13 +303,15 @@ class Controller(object):
 
             elif event.event_type == "edram_rd_ir":
                 edram_rd_data = event.inputs
-                # check data
                 Fetch_data = []
-                for data in edram_rd_data:
-                    if not pe.edram_buffer.get(data):
-                        Fetch_data.append(data)
-                        pe.edram_buffer.miss += 1
+                if not event.isFetch:
+                    # check data
+                    for data in edram_rd_data:
+                        if not pe.edram_buffer.get(data):
+                            Fetch_data.append(data)
+                            pe.edram_buffer.miss += 1
                 if Fetch_data:
+                    event.isFetch = True # 要Fetch data的edram read event 下次執行省略檢查buffer的步驟
                     if self.trace:
                         print("\tfetch event_idx:", self.Computation_order.index(event))
 
@@ -369,13 +371,15 @@ class Controller(object):
 
             elif event.event_type == "edram_rd":
                 edram_rd_data = event.inputs
-                # check data
                 Fetch_data = []
-                for data in edram_rd_data:
-                    if not pe.edram_buffer.get(data):
-                        Fetch_data.append(data)
-                        pe.edram_buffer.miss += 1
+                if not event.isFetch:
+                    # check data
+                    for data in edram_rd_data:
+                        if not pe.edram_buffer.get(data):
+                            Fetch_data.append(data)
+                            pe.edram_buffer.miss += 1
                 if Fetch_data:
+                    event.isFetch = True
                     if self.trace:
                         print("\tfetch event_idx:", self.Computation_order.index(event))
 
