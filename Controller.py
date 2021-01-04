@@ -40,7 +40,7 @@ class Controller(object):
                         pe = PE(self.hw_config, self.model_config.input_bit, pe_pos)
                         self.PE_array[pe_pos] = pe
 
-        self.fetch_dict = dict() # {cycle: list}
+        
         
         self.Total_energy_interconnect = 0
         self.Total_energy_fetch = 0
@@ -56,7 +56,8 @@ class Controller(object):
         self.edram_wr_pe_idx     = set()
         self.pooling_pe_idx      = set()
 
-        self.Trigger = dict()
+        self.Trigger    = dict() # {cycle: list}
+        self.fetch_dict = dict() # {cycle: list}
 
         # Utilization
         if self.record_PE:
@@ -100,6 +101,8 @@ class Controller(object):
 
         self.event_fetch_ctr = dict()
 
+        self.actived_cycle = [1]
+
         self.run()
         self.print_statistics_result()
 
@@ -116,8 +119,10 @@ class Controller(object):
                 pe.edram_erp.append(event)
                 self.edram_pe_idx.add(pe)
         
+        i = 0
         while True:
-            if self.cycle_ctr % 10000 == 0:
+            if self.cycle_ctr // 10000 == i:
+                i += 1
                 print("-----------------------------------------------------------------------")
                 print("Completed: {} %".format(int(self.done_event/len(self.Computation_order) * 100)))
                 print("Model: {}".format(self.model_config.Model_type))
@@ -132,7 +137,7 @@ class Controller(object):
                 self.t_transfer, self.t_fetch = 0, 0
                 self.t_trigger,  self.t_inter = 0, 0
 
-            self.cycle_ctr += 1
+            self.cycle_ctr = self.actived_cycle.pop(0)
 
             if self.record_PE:
                 if len(self.pe_state_for_plot) == self.cycle_ctr:
@@ -140,24 +145,6 @@ class Controller(object):
             if self.record_layer:
                 if len(self.layer_state_for_plot) == self.cycle_ctr:
                     self.layer_state_for_plot.append(set())
-
-            ## Pipeline stage control ###
-            if not self.isPipeLine: # Non_pipeline
-                self.this_layer_cycle_ctr += 1
-                if self.this_layer_event_ctr == self.events_each_layer[self.pipeline_layer_stage] and not self.interconnect.busy_router:
-                    self.pipeline_layer_stage += 1
-                    print("\n------Layer", self.pipeline_layer_stage)
-                    self.cycles_each_layer.append(self.this_layer_cycle_ctr)
-                    self.this_layer_cycle_ctr = 0
-                    self.this_layer_event_ctr = 0
-                    
-                    for trigger in self.Non_pipeline_trigger:
-                        pe = trigger[0]
-                        event = trigger[1]
-                        pe.edram_erp.append(event)
-                        self.edram_pe_idx.add(pe)
-                    
-                    self.Non_pipeline_trigger = []
 
             if self.trace:
                 print("cycle:", self.cycle_ctr)
@@ -170,6 +157,27 @@ class Controller(object):
             self.event_transfer()
             self.interconnect_fn()
             self.fetch()
+
+            ## Pipeline stage control ###
+            if not self.isPipeLine: # Non_pipeline
+                self.this_layer_cycle_ctr += 1
+                if self.this_layer_event_ctr == self.events_each_layer[self.pipeline_layer_stage] and not self.interconnect.busy_router:
+                    self.pipeline_layer_stage += 1
+                    print("\n------Layer", self.pipeline_layer_stage)
+                    self.cycles_each_layer.append(self.this_layer_cycle_ctr)
+                    self.this_layer_cycle_ctr = 0
+                    self.this_layer_event_ctr = 0
+
+                    finish_cycle = self.cycle_ctr + 1
+                    self.check(finish_cycle, self.actived_cycle)
+
+                    for trigger in self.Non_pipeline_trigger:
+                        pe = trigger[0]
+                        event = trigger[1]
+                        pe.edram_erp.append(event)
+                        self.edram_pe_idx.add(pe)
+                    
+                    self.Non_pipeline_trigger = []
 
             # self.record_buffer_util()
             
@@ -279,6 +287,7 @@ class Controller(object):
                                 self.Trigger[finish_cycle] = [[pe, pro_event]]
                             else:
                                 self.Trigger[finish_cycle].append([pe, pro_event])
+                            self.check(finish_cycle, self.actived_cycle)
 
                 if self.record_PE: # PE util
                     self.pe_state_for_plot[self.cycle_ctr].add(pe)
@@ -314,6 +323,7 @@ class Controller(object):
                         self.fetch_dict[finish_cycle].append([event, Fetch_data])
                     else:
                         self.fetch_dict[finish_cycle] = [[event, Fetch_data]]
+                    self.check(finish_cycle, self.actived_cycle)
                 else:
                     if self.trace:
                         print("\tdo edram_rd_ir event_idx:", self.Computation_order.index(event),", layer", event.nlayer)
@@ -345,6 +355,7 @@ class Controller(object):
                                     self.Trigger[finish_cycle] = [[pe, pro_event]]
                                 else:
                                     self.Trigger[finish_cycle].append([pe, pro_event])
+                                self.check(finish_cycle, self.actived_cycle)
                     
                     # PE util
                     if self.record_PE:
@@ -377,6 +388,7 @@ class Controller(object):
                         self.fetch_dict[finish_cycle].append([event, Fetch_data])
                     else: 
                         self.fetch_dict[finish_cycle] = [[event, Fetch_data]]
+                    self.check(finish_cycle, self.actived_cycle)
 
                     # FIXME: a127a127
                     #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
@@ -411,6 +423,7 @@ class Controller(object):
                                     self.Trigger[finish_cycle] = [[pe, pro_event]]
                                 else:
                                     self.Trigger[finish_cycle].append([pe, pro_event])     
+                                self.check(finish_cycle, self.actived_cycle)
                         
                     # PE util
                     if self.record_PE:
@@ -469,6 +482,7 @@ class Controller(object):
                 self.Trigger[finish_cycle] = [[pe, event]]
             else:
                 self.Trigger[finish_cycle].append([pe, event])
+            self.check(finish_cycle, self.actived_cycle)
                         
             if self.record_PE: # PE util
                 for cycle in range(len(self.pe_state_for_plot), finish_cycle+1):
@@ -520,6 +534,7 @@ class Controller(object):
                         self.Trigger[finish_cycle] = [[pe, pro_event]]
                     else:
                         self.Trigger[finish_cycle].append([pe, pro_event])
+                    self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
                 self.pe_state_for_plot[self.cycle_ctr].add(pe)
@@ -563,6 +578,7 @@ class Controller(object):
                     self.Trigger[finish_cycle] = [[pe, pro_event]]
                 else:
                     self.Trigger[finish_cycle].append([pe, pro_event])
+                self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
                 self.pe_state_for_plot[self.cycle_ctr].add(pe)
@@ -609,6 +625,7 @@ class Controller(object):
                         self.Trigger[finish_cycle] = [[pe, pro_event]]
                     else:
                         self.Trigger[finish_cycle].append([pe, pro_event])
+                    self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
                 self.pe_state_for_plot[self.cycle_ctr].add(pe)
@@ -670,6 +687,7 @@ class Controller(object):
                                 self.Trigger[finish_cycle] = [[des_pe, pro_event]]
                             else:
                                 self.Trigger[finish_cycle].append([des_pe, pro_event])
+                            self.check(finish_cycle, self.actived_cycle)
             else:
                 num_data = len(transfer_data)
                 transfer_distance  = abs(data_transfer_des[1] - data_transfer_src[1])
@@ -692,6 +710,8 @@ class Controller(object):
                 data = transfer_data[-1]
                 packet = Packet(data_transfer_src, data_transfer_des, data, event.proceeding_event, self.cycle_ctr)
                 self.interconnect.input_packet(packet)
+
+                self.check(self.cycle_ctr+1, self.actived_cycle)
 
                 # FIXME: a127a127
                 #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + transfer_distance]
@@ -734,7 +754,9 @@ class Controller(object):
                 else:
                     self.transfer_data_inter[nlayer] += num_data
                 self.fetch_data[nlayer] += num_data
-
+            
+            if fetch_list:
+                self.check(self.cycle_ctr+1, self.actived_cycle)
         self.t_fetch += time.time() - tt
 
     def interconnect_fn(self):
@@ -779,8 +801,26 @@ class Controller(object):
                                     self.Trigger[finish_cycle] = [[des_pe, pro_event]]
                                 else:
                                     self.Trigger[finish_cycle].append([des_pe, pro_event])
+                                self.check(self.cycle_ctr+1, self.actived_cycle)
 
+        if self.interconnect.busy_router:
+            self.check(self.cycle_ctr+1, self.actived_cycle)
         self.t_inter += time.time() - tt
+
+    
+    def check(self, n, arr):
+        insertIdx = None
+        for e in arr:
+            if n == e:
+                return
+            if n < e:
+                insertIdx = arr.index(e)
+                break
+        if insertIdx:
+            arr.insert(insertIdx, n)
+        else:
+            arr.append(n)
+
 
     def record_buffer_util(self):
         # time history
