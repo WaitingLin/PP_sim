@@ -294,9 +294,6 @@ class Controller(object):
 
                 if self.record_layer: # layer
                     self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
-                
-                if pe.edram_erp:
-                    check_pe_idx.add(pe)
 
             elif event.event_type == "edram_rd_ir":
                 edram_rd_data = event.inputs
@@ -364,9 +361,6 @@ class Controller(object):
                     # layer
                     if self.record_layer:
                         self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
-                    
-                    if pe.edram_erp:
-                        check_pe_idx.add(pe)
 
             elif event.event_type == "edram_rd":
                 edram_rd_data = event.inputs
@@ -432,9 +426,9 @@ class Controller(object):
                     # layer
                     if self.record_layer:
                         self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
-            
-                    if pe.edram_erp:
-                        check_pe_idx.add(pe)
+
+            if pe.edram_erp:
+                check_pe_idx.add(pe)
 
         self.edram_pe_idx = check_pe_idx
         self.t_edram += time.time() - tt
