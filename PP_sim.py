@@ -100,6 +100,7 @@ def main():
     ### Trace ###
     isTrace_order      = False
     isTrace_controller = False
+    isLog = False
 
     ### Generate computation order graph ### 
     if not LoadOrder:
@@ -148,18 +149,22 @@ def main():
     #Visualizer.visualizeGif(hw_config, model_config, order_generator.Computation_order, f"{model}")
     #return
     
-    log = {}
-
     ## Power and performance simulation ###
     start_simulation_time = time.time()
     print("--- Power and performance simulation---")
-    controller = Controller(model_config, hw_config, order_generator, isTrace_controller, mapping_str, scheduling, path, log)
+    controller = Controller(model_config, hw_config, order_generator, mapping_str, scheduling, path, isTrace_controller, isLog)
     end_simulation_time = time.time()
     print("--- Simulate in %s seconds ---\n" % (end_simulation_time - start_simulation_time))
+
+    if isLog:
+        start_visualize_time = time.time()
+        print("--- Visualize ---")
+        Visualizer.visualizeSimulation2(hw_config, model_config, order_generator.Computation_order, controller.log, f"{model}")
+        end_visualize_time = time.time()
+        print("--- Visualize in %s seconds ---\n" % (end_visualize_time - start_visualize_time))
+
     end_time = time.time()
     print("--- Run in %s seconds ---\n" % (end_time - start_time))
-
-    Visualizer.visualizeSimulation2(hw_config, model_config, order_generator.Computation_order, log, f"{model}")
 
 if __name__ == '__main__':
     main()

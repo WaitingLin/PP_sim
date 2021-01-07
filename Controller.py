@@ -5,19 +5,21 @@ import csv
 import time
 
 class Controller(object):
-    def __init__(self, model_config, hw_config, ordergenerator, trace, mapping_str, scheduling_str, path, log):
+    def __init__(self, model_config, hw_config, ordergenerator, mapping_str, scheduling_str, path, trace = False, isLog = False):
         self.model_config = model_config
         self.hw_config = hw_config
         self.ordergenerator = ordergenerator
-        self.trace = trace
         self.mapping_str = mapping_str
         self.scheduling_str = scheduling_str
         self.path = path
+        self.trace = trace
+        self.isLog = isLog
+
+        if self.isLog:
+            self.log = {}
 
         self.interconnect = Interconnect(self.hw_config)
         
-        self.log = log
-
         if self.scheduling_str == "Pipeline":
             self.isPipeLine = True
         elif self.scheduling_str == "Non-pipeline":
@@ -247,9 +249,6 @@ class Controller(object):
             if event.event_type == "edram_wr":
                 if self.trace:
                     print("\tdo edram_wr event_idx:", self.Computation_order.index(event))
-                
-                ### log
-                pe.edram_event_order.append(self.Computation_order.index(event))
 
                 self.done_event += 1
                 if not self.isPipeLine:
@@ -314,8 +313,10 @@ class Controller(object):
                     if self.trace:
                         print("\t\tevent: ", event)
                         print("\t\t finish_cycle: ", finish_cycle)
-                    # FIXME: a127a127
-                    self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
+                    
+                    if self.isLog: # FIXME: a127a127
+                        self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
+
                     if finish_cycle in self.fetch_dict:
                         self.fetch_dict[finish_cycle].append([event, Fetch_data])
                     else:
@@ -324,9 +325,6 @@ class Controller(object):
                 else:
                     if self.trace:
                         print("\tdo edram_rd_ir event_idx:", self.Computation_order.index(event),", layer", event.nlayer)
-                    
-                    ### log
-                    pe.edram_event_order.append(self.Computation_order.index(event))
                     
                     self.done_event += 1
                     if not self.isPipeLine:
@@ -384,14 +382,11 @@ class Controller(object):
                         self.fetch_dict[finish_cycle] = [[event, Fetch_data]]
                     self.check(finish_cycle, self.actived_cycle)
 
-                    # FIXME: a127a127
-                    #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
+                    # if self.isLog: # FIXME: a127a127
+                    #     self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
                 else:
                     if self.trace:
                         print("\tdo edram_rd event_idx:", self.Computation_order.index(event),", layer", event.nlayer)
-                    
-                    ### log
-                    pe.edram_event_order.append(self.Computation_order.index(event))
 
                     self.done_event += 1
                     if not self.isPipeLine:
@@ -464,13 +459,13 @@ class Controller(object):
             total_cycles = event.inputs[0]
             finish_cycle = self.cycle_ctr + total_cycles + 2 # +2: pipeline last two stage
 
-            # FIXME: a127a127
-            #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
+            if self.isLog: # FIXME: a127a127# FIXME: a127a127
+                #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
 
-            if hasattr(event, 'window_id'):
-                if not 'window_event' in self.log:
-                    self.log['window_event'] = []
-                self.log['window_event'].append((self.cycle_ctr, finish_cycle, event))
+                if hasattr(event, 'window_id'):
+                    if not 'window_event' in self.log:
+                        self.log['window_event'] = []
+                    self.log['window_event'].append((self.cycle_ctr, finish_cycle, event))
 
             if finish_cycle not in self.Trigger:
                 self.Trigger[finish_cycle] = [[pe, event]]
@@ -506,8 +501,8 @@ class Controller(object):
             if not self.isPipeLine:
                 self.this_layer_event_ctr += 1
 
-            # FIXME: a127a127
-            #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
+            # if self.isLog: # FIXME: a127a127
+            #     self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
             
             # Energy
             saa_amount = event.inputs
@@ -554,8 +549,8 @@ class Controller(object):
             if not self.isPipeLine:
                 self.this_layer_event_ctr += 1
 
-            # FIXME: a127a127
-            #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
+            # if self.isLog: # FIXME: a127a127
+            #     self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
             
             # Energy
             act_amount = event.inputs
@@ -595,11 +590,11 @@ class Controller(object):
             if self.trace:
                 print("\tdo pooling event_idx:", self.Computation_order.index(event))
 
-            # FIXME: a127a127
-            #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
-            if not 'pooling' in self.log:
-                self.log['pooling'] = []
-            self.log['pooling'].append((self.cycle_ctr, event))
+            if self.isLog: # FIXME: a127a127
+                #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
+                if not 'pooling' in self.log:
+                    self.log['pooling'] = []
+                self.log['pooling'].append((self.cycle_ctr, event))
             
             self.done_event += 1
             if not self.isPipeLine:
@@ -648,17 +643,17 @@ class Controller(object):
             data_transfer_des = event.position_idx[1]
             des_pe = self.PE_array[data_transfer_des]
 
-            # FIXME: a127a127
-            if not 'data_transfer' in self.log:
-                self.log['data_transfer'] = []
+            if self.isLog: # FIXME: a127a12
+                if not 'data_transfer' in self.log:
+                    self.log['data_transfer'] = []
 
             if data_transfer_src == data_transfer_des:
                 # Trigger
                 finish_cycle = self.cycle_ctr + 1
 
-                # FIXME: a127a127
-                #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
-                self.log['data_transfer'].append((self.cycle_ctr, transfer_data, data_transfer_src[0:2], data_transfer_des[0:2]))
+                if self.isLog: # FIXME: a127a127
+                    #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + 1]
+                    self.log['data_transfer'].append((self.cycle_ctr, transfer_data, data_transfer_src[0:2], data_transfer_des[0:2]))
 
                 for data in transfer_data:
                     K = des_pe.edram_buffer.put(data, data)
@@ -707,8 +702,8 @@ class Controller(object):
 
                 self.check(self.cycle_ctr+1, self.actived_cycle)
 
-                # FIXME: a127a127
-                #self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + transfer_distance]
+                # if self.isLog: # FIXME: a127a127
+                #     self.log[self.Computation_order.index(event)] = [self.cycle_ctr, self.cycle_ctr + transfer_distance]
 
         self.data_transfer_erp = []
 
@@ -758,8 +753,9 @@ class Controller(object):
         if self.interconnect.busy_router:
             for s in range(self.hw_config.interconnect_step_num):
                 arrived, data_transfers = self.interconnect.step()
-                for data_transfer in data_transfers:
-                    self.log['data_transfer'].append((self.cycle_ctr, [data_transfer[2].data], data_transfer[0], data_transfer[1]))
+                if self.isLog: 
+                    for data_transfer in data_transfers:
+                        self.log['data_transfer'].append((self.cycle_ctr, [data_transfer[2].data], data_transfer[0], data_transfer[1]))
                 for packet in arrived:
                     des_pe_id = packet.destination
                     des_pe = self.PE_array[des_pe_id]
@@ -949,22 +945,6 @@ class Controller(object):
             writer.writerow(["edram_rd", self.ordergenerator.edram_rd_ctr])
             writer.writerow(["pooling", self.ordergenerator.pooling_ctr])
             writer.writerow(["data_transfer", self.ordergenerator.data_transfer_ctr])
-
-        ### log
-        with open(self.path+'/event_order_log.csv', 'w', newline='') as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["PE"])
-            for pe_pos in self.PE_array:
-                pe = self.PE_array[pe_pos]
-                A = ""
-                if pe.edram_event_order:
-                    idx1 = -1
-                    for idx in pe.edram_event_order:
-                        if idx <= idx1:
-                            A = "Order error"
-                            break
-                        idx1 = idx
-                    writer.writerow([pe.plot_idx, A, str(pe.edram_event_order)])
 
     def PE_energy_breakdown(self):
         # PE breakdown
