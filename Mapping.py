@@ -612,8 +612,8 @@ class HIDR(object):
                 o_height  = self.model_info.input_h[nlayer+1]
                 o_width   = self.model_info.input_w[nlayer+1]
                 o_channel = self.model_info.input_c[nlayer+1]
-                for ow in range(o_height):
-                    for oh in range(o_width):
+                for ow in range(o_width):
+                    for oh in range(o_height):
                         for oc in range(o_channel):
                             self.window_order[nlayer].append((oh, ow, oc))
 
