@@ -103,6 +103,7 @@ class OrderGenerator(object):
             layer_type = self.model_info.layer_list[nlayer].layer_type
             print("Generate layer", nlayer, layer_type)
             if layer_type == "convolution":
+                PE_dependency_idx = self.PE_dependency_idx.copy()
                #----決定每個filter的aggregator PE----#
                 pe_filter_processing = dict() # {PE1:{"act":[f1, f2], "transfer": {des_pe1:[f3, f4], des_pe2:[f5,f6]}, "aggregate":[f7]}, PE2: ...}
                                               #   PE1做act的filter(f1&f2),  f3&f4會傳到PE1做arregate f5&f6傳到PE2,       f7在此PE aggregate
@@ -235,11 +236,11 @@ class OrderGenerator(object):
                                 # dependency: eDRAM event dependency in same PE
                                 pe_id =  pex_idx + pey_idx * self.hw_config.PE_num_x + \
                                     rtx_idx * self.hw_config.PE_num + rty_idx * self.hw_config.Router_num_x * self.hw_config.PE_num
-                                pre_edram_id = self.PE_dependency_idx[pe_id]
+                                pre_edram_id = PE_dependency_idx[pe_id]
                                 if pre_edram_id != -1:
                                     eri_preceding_count += 1
                                     self.Computation_order[pre_edram_id].proceeding_event.append(eri_event_idx)
-                                self.PE_dependency_idx[pe_id] = eri_event_idx
+                                PE_dependency_idx[pe_id] = eri_event_idx
 
                                 eri_inputs  = edram_read_data
                                 eri_outputs = 0
@@ -336,11 +337,11 @@ class OrderGenerator(object):
                                     wr_outputs = edram_write_data[n*can_write_data: (n+1)*can_write_data]
 
                                     # dependency: eDRAM event dependency in same PE
-                                    pre_edram_id = self.PE_dependency_idx[pe_id]
+                                    pre_edram_id = PE_dependency_idx[pe_id]
                                     if pre_edram_id != -1:
                                         wr_preceding_count += 1
                                         self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                                    self.PE_dependency_idx[pe_id] = wr_event_idx
+                                    PE_dependency_idx[pe_id] = wr_event_idx
                                     
                                     # dependency
                                     if n == 0:
@@ -439,11 +440,11 @@ class OrderGenerator(object):
                                 wr_outputs = edram_write_data[n*can_write_data: (n+1)*can_write_data]
 
                                 # dependency: eDRAM event dependency in same PE
-                                pre_edram_id = self.PE_dependency_idx[pe_id]
+                                pre_edram_id = PE_dependency_idx[pe_id]
                                 if pre_edram_id != -1:
                                     wr_preceding_count += 1
                                     self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                                self.PE_dependency_idx[pe_id] = wr_event_idx
+                                PE_dependency_idx[pe_id] = wr_event_idx
 
                                 # dependency
                                 if n == 0:
@@ -500,12 +501,12 @@ class OrderGenerator(object):
                                 # dependency: eDRAM event dependency in same PE
                                 pe_id =  pex_idx + pey_idx * self.hw_config.PE_num_x + \
                                     rtx_idx * self.hw_config.PE_num + rty_idx * self.hw_config.Router_num_x * self.hw_config.PE_num
-                                pre_edram_id = self.PE_dependency_idx[pe_id]
+                                pre_edram_id = PE_dependency_idx[pe_id]
                                 if pre_edram_id != -1:
                                     if eri_event_idx not in self.Computation_order[pre_edram_id].proceeding_event:
                                         eri_preceding_count += 1
                                         self.Computation_order[pre_edram_id].proceeding_event.append(eri_event_idx)
-                                self.PE_dependency_idx[pe_id] = eri_event_idx
+                                PE_dependency_idx[pe_id] = eri_event_idx
                                 
                                 # dependency
                                 for event_idx in wr_and_transfer_event_dict[pe_pos]:
@@ -561,11 +562,11 @@ class OrderGenerator(object):
                                         wr_outputs = write_or_transfer_data[n*can_write_data: (n+1)*can_write_data]
 
                                         # dependency: eDRAM event dependency in same PE
-                                        pre_edram_id = self.PE_dependency_idx[pe_id]
+                                        pre_edram_id = PE_dependency_idx[pe_id]
                                         if pre_edram_id != -1:
                                             wr_preceding_count += 1
                                             self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                                        self.PE_dependency_idx[pe_id] = wr_event_idx
+                                        PE_dependency_idx[pe_id] = wr_event_idx
                                         
                                         # dependency
                                         if n == 0:
@@ -623,6 +624,7 @@ class OrderGenerator(object):
                    #--------------------#
             
             elif layer_type == "fully":
+                PE_dependency_idx = self.PE_dependency_idx.copy()
                #----決定每個filter的aggregator PE----# # 和conv一樣
                 pe_filter_processing = dict() # {PE1:{"act":[f1, f2], "transfer": {des_pe1:[f3, f4], des_pe2:[f5,f6]}, "aggregate":[f7]}, PE2: ...}
 
@@ -742,11 +744,11 @@ class OrderGenerator(object):
                                     self.Computation_order[pre_cu_op_id].proceeding_event.append(eri_event_idx)
                             
                             # dependency: eDRAM event dependency in same PE
-                            pre_edram_id = self.PE_dependency_idx[pe_id]
+                            pre_edram_id = PE_dependency_idx[pe_id]
                             if pre_edram_id != -1:
                                 eri_preceding_count += 1
                                 self.Computation_order[pre_edram_id].proceeding_event.append(eri_event_idx)
-                            self.PE_dependency_idx[pe_id] = eri_event_idx
+                            PE_dependency_idx[pe_id] = eri_event_idx
                                     
                             eri_inputs  = edram_read_data
                             eri_outputs = 0
@@ -840,11 +842,11 @@ class OrderGenerator(object):
                                 wr_outputs = edram_write_data[n*can_write_data: (n+1)*can_write_data]
 
                                 # dependency: eDRAM event dependency in same PE
-                                pre_edram_id = self.PE_dependency_idx[pe_id]
+                                pre_edram_id = PE_dependency_idx[pe_id]
                                 if pre_edram_id != -1:
                                     wr_preceding_count += 1
                                     self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                                self.PE_dependency_idx[pe_id] = wr_event_idx
+                                PE_dependency_idx[pe_id] = wr_event_idx
 
                                 # dependency
                                 if n == 0:
@@ -931,11 +933,11 @@ class OrderGenerator(object):
                             wr_outputs = edram_write_data[n*can_write_data: (n+1)*can_write_data]
                     
                             # dependency: eDRAM event dependency in same PE
-                            pre_edram_id = self.PE_dependency_idx[pe_id]
+                            pre_edram_id = PE_dependency_idx[pe_id]
                             if pre_edram_id != -1:
                                 wr_preceding_count += 1
                                 self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                            self.PE_dependency_idx[pe_id] = wr_event_idx
+                            PE_dependency_idx[pe_id] = wr_event_idx
 
                             # dependency
                             if n == 0:
@@ -994,12 +996,12 @@ class OrderGenerator(object):
                             eri_preceding_count = 0
 
                             # dependency: eDRAM event dependency in same PE
-                            pre_edram_id = self.PE_dependency_idx[pe_id]
+                            pre_edram_id = PE_dependency_idx[pe_id]
                             if pre_edram_id != -1:
                                 if eri_event_idx not in self.Computation_order[pre_edram_id].proceeding_event:
                                     eri_preceding_count += 1
                                     self.Computation_order[pre_edram_id].proceeding_event.append(eri_event_idx)
-                            self.PE_dependency_idx[pe_id] = eri_event_idx
+                            PE_dependency_idx[pe_id] = eri_event_idx
                             
                             # dependency
                             for event_idx in wr_and_transfer_event_dict[pe_pos]:
@@ -1052,11 +1054,11 @@ class OrderGenerator(object):
                                     wr_outputs = write_or_transfer_data[n*can_write_data: (n+1)*can_write_data]
 
                                     # dependency: eDRAM event dependency in same PE
-                                    pre_edram_id = self.PE_dependency_idx[pe_id]
+                                    pre_edram_id = PE_dependency_idx[pe_id]
                                     if pre_edram_id != -1:
                                         wr_preceding_count += 1
                                         self.Computation_order[pre_edram_id].proceeding_event.append(wr_event_idx)
-                                    self.PE_dependency_idx[pe_id] = wr_event_idx
+                                    PE_dependency_idx[pe_id] = wr_event_idx
                                     
                                     # dependency
                                     if n == 0:
@@ -1104,6 +1106,7 @@ class OrderGenerator(object):
                #=============#
 
             elif layer_type == "pooling":
+                PE_dependency_idx = self.PE_dependency_idx.copy()
                 pooling_data = self.model_info.pooling_h[nlayer] * self.model_info.pooling_w[nlayer] # per pooling
                 num_pooling_per_cycle = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle / pooling_data) # 一個cycle最多可以做幾個pooling
                 for pe_pos in self.mp_info.layer_used_component[nlayer]:
@@ -1143,12 +1146,12 @@ class OrderGenerator(object):
                         eri_preceding_count = len(pre_event)
 
                         # dependency: eDRAM event dependency in same PE
-                        pre_edram_id = self.PE_dependency_idx[pe_id]
+                        pre_edram_id = PE_dependency_idx[pe_id]
                         if pre_edram_id != -1:
                             if eri_event_idx not in self.Computation_order[pre_edram_id].proceeding_event:
                                 eri_preceding_count += 1
                                 self.Computation_order[pre_edram_id].proceeding_event.append(eri_event_idx)
-                        self.PE_dependency_idx[pe_id] = eri_event_idx
+                        PE_dependency_idx[pe_id] = eri_event_idx
 
                         eri_inputs  = edram_read_data
                         eri_outputs = 1
