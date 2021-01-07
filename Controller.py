@@ -712,7 +712,7 @@ class Controller(object):
     def fetch(self):
         tt = time.time()
         if self.cycle_ctr in self.fetch_dict:
-            fetch_list = self.fetch_dict[self.cycle_ctr]
+            fetch_list = self.fetch_dict.pop(self.cycle_ctr)
             if self.trace:
                 print("\t in fetch_dict")
                 print("\t fetch_list: ", fetch_list)

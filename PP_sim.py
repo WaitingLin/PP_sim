@@ -7,8 +7,8 @@ from HardwareConfig import HardwareConfig
 from Visualizer import Visualizer
 
 import time, sys, os, pickle, math
-import jsons, jsbeautifier
-from tqdm import tqdm
+# import jsons, jsbeautifier
+# from tqdm import tqdm
 
 # 1. 本來mappy.py, Ordergenerator 吃 model_config, 現在吃model_info model_info = Model(model_config)
 # 2. Model.py: 多一個Model_type參數
