@@ -52,9 +52,6 @@ class PE(object):
         self.cu_state = []
         for i in range(self.hw_config.CU_num):
             self.cu_state.append(False)
-        
-        ### Log
-        self.edram_event_order = []
 
     def __str__(self):
         return str(self.__dict__)

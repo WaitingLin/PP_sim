@@ -567,7 +567,7 @@ class Visualizer:
                 if count > 0:
                     active_layers.add(window_id[0])
                     active_windows.add(window_id)
-            print(start_cycle, end_cycle, active_layers, active_windows, active_router)
+            #print(start_cycle, end_cycle, active_layers, active_windows, active_router)
             graph.draw(f"Cycle [{start_cycle} ~ {end_cycle})", f"{filename}-{index:003}", active_cu, active_pe, active_router, active_layers=active_layers, active_windows=active_windows)
             index += 1
 
