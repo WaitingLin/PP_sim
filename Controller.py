@@ -41,8 +41,6 @@ class Controller(object):
                         pe_pos = (rty_idx, rtx_idx, pey_idx, pex_idx)
                         pe = PE(self.hw_config, self.model_config.input_bit, pe_pos)
                         self.PE_array[pe_pos] = pe
-
-        
         
         self.Total_energy_interconnect = 0
         self.Total_energy_fetch = 0
@@ -78,7 +76,6 @@ class Controller(object):
                 self.events_each_layer[e.nlayer] += 1
 
             self.this_layer_event_ctr = 0
-            self.this_layer_cycle_ctr = 0
             self.cycles_each_layer = []
             print("events_each_layer:", self.events_each_layer)
             self.Non_pipeline_trigger = []
@@ -120,20 +117,20 @@ class Controller(object):
                 pe = self.PE_array[pe_idx]
                 pe.edram_erp.append(event)
                 self.edram_pe_idx.add(pe)
-        
+        print("Mapping: {}, Scheduling: {}".format(self.mapping_str, self.scheduling_str))
+        print("-----------------------------------------------------")
         i = 0
         while True:
             if self.cycle_ctr // 10000 == i:
                 i += 1
-                print("-----------------------------------------------------------------------")
-                print("Completed: {} %".format(int(self.done_event/len(self.Computation_order) * 100)))
-                print("Model: {}".format(self.model_config.Model_type))
-                print("Mapping: {}, Scheduling: {}".format(self.mapping_str, self.scheduling_str))
-                print("Cycle: {}, Done event: {}".format(self.cycle_ctr, self.done_event))
-                print()
-                print("edram: {:.6f}, cuop : {:.6f}, pesaa:    {:.6f}, act  : {:.6f}".format(self.t_edram, self.t_cuop, self.t_pesaa, self.t_act))
-                print("pool : {:.6f}, transfer: {:.6f}, fetch: {:.6f}".format(self.t_pool, self.t_transfer, self.t_fetch))
-                print("trigger: {:.6f}, interconnect: {:.6f}".format(self.t_trigger, self.t_inter))
+                #print("-----------------------------------------------------------------------")
+                percentage = int(self.done_event/len(self.Computation_order) * 100)
+                print(f"Completed: {percentage} %, Cycle: {self.cycle_ctr}, Done events: {self.done_event}\r", end="")
+                #print("Mapping: {}, Scheduling: {}".format(self.mapping_str, self.scheduling_str))
+                #print()
+                #print("edram: {:.6f}, cuop : {:.6f}, pesaa:    {:.6f}, act  : {:.6f}".format(self.t_edram, self.t_cuop, self.t_pesaa, self.t_act))
+                #print("pool : {:.6f}, transfer: {:.6f}, fetch: {:.6f}".format(self.t_pool, self.t_transfer, self.t_fetch))
+                #print("trigger: {:.6f}, interconnect: {:.6f}".format(self.t_trigger, self.t_inter))
                 self.t_edram, self.t_cuop, self.t_pesaa = 0, 0, 0
                 self.t_act,      self.t_pool  = 0, 0
                 self.t_transfer, self.t_fetch = 0, 0
@@ -160,14 +157,20 @@ class Controller(object):
             self.interconnect_fn()
             self.fetch()
 
+            ### Finish
+            if self.done_event == len(self.Computation_order):
+                break
+
             ## Pipeline stage control ###
             if not self.isPipeLine: # Non_pipeline
-                self.this_layer_cycle_ctr += 1
-                if self.this_layer_event_ctr == self.events_each_layer[self.pipeline_layer_stage] and not self.interconnect.busy_router:
+                if self.this_layer_event_ctr == self.events_each_layer[self.pipeline_layer_stage]: # and not self.interconnect.busy_router:
+                    if self.pipeline_layer_stage == 0:
+                        self.cycles_each_layer.append(self.cycle_ctr)
+                    else:
+                        self.cycles_each_layer.append(self.cycle_ctr - self.cycles_each_layer[-1])
                     self.pipeline_layer_stage += 1
-                    print("\n------Layer", self.pipeline_layer_stage)
-                    self.cycles_each_layer.append(self.this_layer_cycle_ctr)
-                    self.this_layer_cycle_ctr = 0
+                    #print("\n------Layer", self.pipeline_layer_stage)
+
                     self.this_layer_event_ctr = 0
 
                     finish_cycle = self.cycle_ctr + 1
@@ -180,12 +183,7 @@ class Controller(object):
                         self.edram_pe_idx.add(pe)
                     
                     self.Non_pipeline_trigger = []
-
             # self.record_buffer_util()
-            
-            ### Finish
-            if self.done_event == len(self.Computation_order):
-                break
 
     def trigger_event(self):
         tt = time.time()
@@ -697,7 +695,8 @@ class Controller(object):
                     packet = Packet(data_transfer_src, data_transfer_des, data, [], self.cycle_ctr)
                     self.interconnect.input_packet(packet)
                 data = transfer_data[-1]
-                packet = Packet(data_transfer_src, data_transfer_des, data, event.proceeding_event, self.cycle_ctr)
+                event_l = [self.Computation_order[idx] for idx in event.proceeding_event]
+                packet = Packet(data_transfer_src, data_transfer_des, data, event_l, self.cycle_ctr)
                 self.interconnect.input_packet(packet)
 
                 self.check(self.cycle_ctr+1, self.actived_cycle)
@@ -718,7 +717,6 @@ class Controller(object):
                 print("\t fetch_list: ", fetch_list)
             for F in fetch_list:
                 event, transfer_data = F[0], F[1]
-                event_idx = self.Computation_order.index(event)
                 num_data = len(transfer_data)
                 rty, rtx = event.position_idx[0], event.position_idx[1]
                 pey, pex = event.position_idx[2], event.position_idx[3]
@@ -727,15 +725,15 @@ class Controller(object):
 
                 # Energy
                 self.Total_energy_fetch += self.hw_config.Energy_off_chip_Rd * self.input_bit * num_data
-
+                
                 for i in range(len(transfer_data)-1):
                     data = transfer_data[i]
                     packet = Packet(data_transfer_src, data_transfer_des, data, [], self.cycle_ctr)
                     self.interconnect.input_packet(packet)
                 data = transfer_data[-1]
-                packet = Packet(data_transfer_src, data_transfer_des, data, [event_idx], self.cycle_ctr)
+                packet = Packet(data_transfer_src, data_transfer_des, data, [event], self.cycle_ctr)
                 self.interconnect.input_packet(packet)
-
+                
                 # Statistic
                 nlayer = event.nlayer
                 if len(transfer_data[0]) == 4:
@@ -743,9 +741,10 @@ class Controller(object):
                 else:
                     self.transfer_data_inter[nlayer] += num_data
                 self.fetch_data[nlayer] += num_data
+        
+        if self.interconnect.busy_router:
+            self.check(self.cycle_ctr+1, self.actived_cycle)
             
-            if fetch_list:
-                self.check(self.cycle_ctr+1, self.actived_cycle)
         self.t_fetch += time.time() - tt
 
     def interconnect_fn(self):
@@ -779,8 +778,8 @@ class Controller(object):
                     self.transfer_cycles[nlayer] += end_transfer_cycle - start_transfer_cycle
 
                     # Trigger
-                    for proceeding_index in pro_event_list:
-                        pro_event = self.Computation_order[proceeding_index]
+                    for pro_event in pro_event_list:
+                        #pro_event = self.Computation_order[proceeding_index]
                         pro_event.current_number_of_preceding_event += 1
                         if pro_event.preceding_event_count == pro_event.current_number_of_preceding_event:
                             if not self.isPipeLine and pro_event.nlayer != self.pipeline_layer_stage: # Non_pipeline

@@ -37,6 +37,7 @@ def main():
     filename = './order_file/'+model_config.Model_type+'_'+mapping_str+'_'+scheduling+'_'+buffer_size_str+'.pkl'
     try:
         with open(filename, 'rb') as input:
+            print("Load computation order...")
             order_generator = pickle.load(input)
     except FileNotFoundError:
         print("Order file not found.")
