@@ -106,7 +106,6 @@ class Controller(object):
         self.print_statistics_result()
 
     def run(self):
-        print("estimation start")
         for event in self.Computation_order:
             if event.nlayer != 0:
                 break
@@ -159,6 +158,7 @@ class Controller(object):
 
             ### Finish
             if self.done_event == len(self.Computation_order):
+                print()
                 break
 
             ## Pipeline stage control ###
@@ -334,21 +334,18 @@ class Controller(object):
                     pe.Bus_energy          += self.hw_config.Energy_bus          * self.input_bit * num_data # bus
                     pe.CU_IR_energy        += self.hw_config.Energy_ir_in_cu     * self.input_bit * num_data # IR write
                     
-                    # Trigger: CU operation and edram
+                    # Trigger: CU operation
                     finish_cycle = self.cycle_ctr + self.hw_config.eDRAM_buffer_read_to_IR_cycles
                     for proceeding_index in event.proceeding_event:
                         pro_event = self.Computation_order[proceeding_index]
                         pro_event.current_number_of_preceding_event += 1
 
                         if pro_event.preceding_event_count == pro_event.current_number_of_preceding_event:
-                            if not self.isPipeLine and pro_event.nlayer != self.pipeline_layer_stage: # Non_pipeline
-                                self.Non_pipeline_trigger.append([pe, pro_event])
+                            if finish_cycle not in self.Trigger:
+                                self.Trigger[finish_cycle] = [[pe, pro_event]]
                             else:
-                                if finish_cycle not in self.Trigger:
-                                    self.Trigger[finish_cycle] = [[pe, pro_event]]
-                                else:
-                                    self.Trigger[finish_cycle].append([pe, pro_event])
-                                self.check(finish_cycle, self.actived_cycle)
+                                self.Trigger[finish_cycle].append([pe, pro_event])
+                            self.check(finish_cycle, self.actived_cycle)
                     
                     # PE util
                     if self.record_PE:
@@ -422,6 +419,9 @@ class Controller(object):
 
             if pe.edram_erp:
                 check_pe_idx.add(pe)
+
+        if check_pe_idx:
+            self.check(self.cycle_ctr+1, self.actived_cycle)
 
         self.edram_pe_idx = check_pe_idx
         self.t_edram += time.time() - tt
@@ -675,6 +675,7 @@ class Controller(object):
                             else:
                                 self.Trigger[finish_cycle].append([des_pe, pro_event])
                             self.check(finish_cycle, self.actived_cycle)
+            
             else:
                 num_data = len(transfer_data)
                 transfer_distance  = abs(data_transfer_des[1] - data_transfer_src[1])
@@ -779,7 +780,6 @@ class Controller(object):
 
                     # Trigger
                     for pro_event in pro_event_list:
-                        #pro_event = self.Computation_order[proceeding_index]
                         pro_event.current_number_of_preceding_event += 1
                         if pro_event.preceding_event_count == pro_event.current_number_of_preceding_event:
                             if not self.isPipeLine and pro_event.nlayer != self.pipeline_layer_stage: # Non_pipeline
@@ -790,7 +790,7 @@ class Controller(object):
                                     self.Trigger[finish_cycle] = [[des_pe, pro_event]]
                                 else:
                                     self.Trigger[finish_cycle].append([des_pe, pro_event])
-                                self.check(self.cycle_ctr+1, self.actived_cycle)
+                                self.check(finish_cycle, self.actived_cycle)
 
         if self.interconnect.busy_router:
             self.check(self.cycle_ctr+1, self.actived_cycle)
@@ -798,14 +798,14 @@ class Controller(object):
 
     
     def check(self, n, arr):
-        insertIdx = None
+        insertIdx = -1
         for e in arr:
             if n == e:
                 return
             if n < e:
                 insertIdx = arr.index(e)
                 break
-        if insertIdx:
+        if insertIdx >= 0:
             arr.insert(insertIdx, n)
         else:
             arr.append(n)
