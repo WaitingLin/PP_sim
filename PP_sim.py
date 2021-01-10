@@ -5,16 +5,7 @@ from Controller import Controller
 from ModelConfig import ModelConfig
 from HardwareConfig import HardwareConfig
 from Visualizer import Visualizer
-
 import time, sys, os, pickle, math
-# import jsons, jsbeautifier
-# from tqdm import tqdm
-
-# 1. 本來mappy.py, Ordergenerator 吃 model_config, 現在吃model_info model_info = Model(model_config)
-# 2. Model.py: 多一個Model_type參數
-# 3. Mapping 多紀錄CU index
-# 4. Controller: 支援前面Ordergenerator的修改
-
 
 def main():
     start_time = time.time()
@@ -169,4 +160,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
