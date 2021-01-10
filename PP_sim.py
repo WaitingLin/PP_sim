@@ -165,7 +165,7 @@ def main():
         print("--- Visualize in %s seconds ---\n" % (end_visualize_time - start_visualize_time))
 
     end_time = time.time()
-    print("--- Run in %s seconds ---\n" % (end_time - start_time))
+    print("Total simulation time: %s" % (end_time - start_time))
 
 if __name__ == '__main__':
     main()

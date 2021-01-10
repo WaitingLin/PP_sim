@@ -158,6 +158,8 @@ class Controller(object):
 
             ### Finish
             if self.done_event == len(self.Computation_order):
+                percentage = int(self.done_event/len(self.Computation_order) * 100)
+                print(f"Completed: {percentage} %, Cycle: {self.cycle_ctr}, Done events: {self.done_event}\r", end="")
                 print()
                 break
 

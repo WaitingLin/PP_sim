@@ -1218,8 +1218,6 @@ class OrderGenerator(object):
                             
                             self.transfer_feature_map_data_num += len(transfer_outputs)
                            #--------------------------#
-        
-        print('Order generated!')
 
     def print_order(self):
         self.edram_rd_ir_ctr = 0
@@ -1251,14 +1249,11 @@ class OrderGenerator(object):
             else:
                 print("event type error:", t)
 
-        print("edram_rd_ir_ctr", self.edram_rd_ir_ctr)
-        print("cu_op_ctr", self.cu_op_ctr)
-        print("pe_saa_ctr", self.pe_saa_ctr)
-        print("activation_ctr", self.activation_ctr)
-        print("edram_wr_ctr", self.edram_wr_ctr)
-        print("edram_rd_ctr", self.edram_rd_ctr)
-        print("data_transfer_ctr", self.data_transfer_ctr)
-        print("total", len(self.Computation_order))
+        print("Number of event:")
+        print("\ttotal:", len(self.Computation_order))
+        print(f"\tedram_rd_ir: {self.edram_rd_ir_ctr}, cu_op: {self.cu_op_ctr}, pe_saa: {self.pe_saa_ctr}")
+        print(f"\tact: {self.activation_ctr}, edram_wr: {self.edram_wr_ctr}, edram_rd: {self.edram_rd_ctr}")
+        print(f"\ttransfer: {self.data_transfer_ctr}")
 
         if self.trace:
             layer = 0
