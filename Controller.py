@@ -120,7 +120,7 @@ class Controller(object):
         print("-----------------------------------------------------")
         i = 0
         while True:
-            if self.cycle_ctr // 10000 == i:
+            if self.cycle_ctr // 10000 == i and not self.trace:
                 i += 1
                 #print("-----------------------------------------------------------------------")
                 percentage = int(self.done_event/len(self.Computation_order) * 100)
@@ -193,7 +193,7 @@ class Controller(object):
             for trigger in self.Trigger[self.cycle_ctr]:
                 pe, event = trigger[0], trigger[1]
                 if self.trace:
-                    print(f"\t Trigger[{self.cycle_ctr}]: {trigger}")
+                    print(f"\tTrigger {event.event_type}: {self.Computation_order.index(event)}")
                 
                 if event.event_type == "edram_rd_ir" or event.event_type == "edram_rd" or event.event_type == "edram_wr":
                     pe.edram_erp.append(event)
@@ -310,9 +310,6 @@ class Controller(object):
 
                     event.current_number_of_preceding_event -= 1
                     finish_cycle = self.cycle_ctr + 1
-                    if self.trace:
-                        print("\t\tevent: ", event)
-                        print("\t\t finish_cycle: ", finish_cycle)
                     
                     if self.isLog: # FIXME: a127a127
                         self.log[self.Computation_order.index(event)] = [self.cycle_ctr, finish_cycle + 1]
@@ -715,9 +712,6 @@ class Controller(object):
         tt = time.time()
         if self.cycle_ctr in self.fetch_dict:
             fetch_list = self.fetch_dict.pop(self.cycle_ctr)
-            if self.trace:
-                print("\t in fetch_dict")
-                print("\t fetch_list: ", fetch_list)
             for F in fetch_list:
                 event, transfer_data = F[0], F[1]
                 num_data = len(transfer_data)

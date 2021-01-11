@@ -190,7 +190,10 @@ class OrderGenerator(object):
                                 for xb_idx in range(self.hw_config.Xbar_num):
                                     if (window_h,window_w) in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                         xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][(window_h,window_w)]
-                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                        try:
+                                            xbar_mapping_info = xbar_mapping_info_list[l]
+                                        except IndexError:
+                                            continue
                                         inp_vector = xbar_mapping_info.inputs
                                         for data in inp_vector:
                                             if data != 0:
@@ -259,7 +262,10 @@ class OrderGenerator(object):
                                 for xb_idx in range(self.hw_config.Xbar_num):
                                     if (window_h,window_w) in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                         xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][(window_h,window_w)]
-                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                        try:
+                                            xbar_mapping_info = xbar_mapping_info_list[l]
+                                        except IndexError:
+                                            continue
                                         inp_vector = xbar_mapping_info.inputs
                                         num_ou_h = ceil(len(inp_vector)/ self.hw_config.OU_h)
                                         num_ou_w = ceil(xbar_mapping_info.Cols / self.hw_config.OU_w)
@@ -287,7 +293,10 @@ class OrderGenerator(object):
                                 for xb_idx in range(self.hw_config.Xbar_num):
                                     if (window_h,window_w) in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                         xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][(window_h,window_w)]
-                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                        try:
+                                            xbar_mapping_info = xbar_mapping_info_list[l]
+                                        except IndexError:
+                                            continue
                                         filter_list = xbar_mapping_info.Filters # 此xbar 會計算到的 filter
                                         for f in filter_list:
                                             cu_operate_filter.add(f)
@@ -704,7 +713,10 @@ class OrderGenerator(object):
                             for xb_idx in range(self.hw_config.Xbar_num):
                                 if 0 in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                     xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][0]
-                                    xbar_mapping_info = xbar_mapping_info_list[l]
+                                    try:
+                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                    except IndexError:
+                                        continue
                                     inp_vector = xbar_mapping_info.inputs
                                     for data in inp_vector:
                                         if data != 0:
@@ -767,7 +779,10 @@ class OrderGenerator(object):
                             for xb_idx in range(self.hw_config.Xbar_num):
                                 if 0 in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                     xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][0]
-                                    xbar_mapping_info = xbar_mapping_info_list[l]
+                                    try:
+                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                    except IndexError:
+                                        continue
                                     inp_vector = xbar_mapping_info.inputs
                                     num_ou_h = ceil(len(inp_vector)/ self.hw_config.OU_h)
                                     num_ou_w = ceil(xbar_mapping_info.Cols / self.hw_config.OU_w)
@@ -794,7 +809,10 @@ class OrderGenerator(object):
                             for xb_idx in range(self.hw_config.Xbar_num):
                                 if 0 in self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer]:
                                     xbar_mapping_info_list = self.mp_info.mapping_to_xbar[rty_idx][rtx_idx][pey_idx][pex_idx][cu_idx][xb_idx][nlayer][0]
-                                    xbar_mapping_info = xbar_mapping_info_list[l]
+                                    try:
+                                        xbar_mapping_info = xbar_mapping_info_list[l]
+                                    except IndexError:
+                                        continue
                                     filter_list = xbar_mapping_info.Filters # 此xbar 會計算到的 filter
                                     for f in filter_list:
                                         cu_operate_filter.add(f)
