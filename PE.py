@@ -45,6 +45,7 @@ class PE(object):
         self.CU_dac_energy           = 0.
         self.CU_adc_energy           = 0.
         self.CU_crossbar_energy      = 0.
+        self.CU_SH_energy            = 0.
         self.CU_IR_energy            = 0.
         self.CU_OR_energy            = 0.
 

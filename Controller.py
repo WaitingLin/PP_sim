@@ -257,18 +257,17 @@ class Controller(object):
                 # Energy
                 edram_write_data = event.outputs
                 num_data = len(edram_write_data)
-                pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * num_data
-                pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit * num_data
+                pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer * num_data
 
                 # Write data
                 for data in edram_write_data:
                     K = pe.edram_buffer.put(data, data)
                     if K: # kick data out of buffer
                         # TODO: simulate data transfer
-                        pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit # read
+                        pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
                         transfer_distance = pe.position[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
                         self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 #self.check_buffer_pe_set.add(pe)
@@ -329,9 +328,9 @@ class Controller(object):
 
                     # Energy
                     num_data = len(edram_rd_data)
-                    pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit * num_data # eDRAM read
-                    pe.Bus_energy          += self.hw_config.Energy_bus          * self.input_bit * num_data # bus
-                    pe.CU_IR_energy        += self.hw_config.Energy_ir_in_cu     * self.input_bit * num_data # IR write
+                    pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer * num_data # eDRAM read
+                    pe.Bus_energy          += self.hw_config.Energy_eDRAM_to_CU_bus * num_data # bus
+                    pe.CU_IR_energy        += self.hw_config.Energy_IR * num_data # IR write
                     
                     # Trigger: CU operation
                     finish_cycle = self.cycle_ctr + self.hw_config.eDRAM_buffer_read_to_IR_cycles
@@ -388,8 +387,8 @@ class Controller(object):
                     
                     # Energy
                     num_data = len(edram_rd_data)
-                    pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit * num_data # eDRAM read
-                    pe.Bus_energy          += self.hw_config.Energy_bus          * self.input_bit * num_data # bus
+                    pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer * num_data # eDRAM read
+                    # pe.Bus_energy          += self.hw_config.Energy_bus          * self.input_bit * num_data # bus
                     
                     # Trigger: pooling and edram
                     edram_read_cycles = event.outputs
@@ -442,14 +441,13 @@ class Controller(object):
             ou_num_dict = event.inputs[1]
             for xb_idx in ou_num_dict:
                 ou_num = ou_num_dict[xb_idx]
-                pe.CU_dac_energy           += self.hw_config.Energy_ou_dac      * ou_num
-                pe.CU_crossbar_energy      += self.hw_config.Energy_ou_crossbar * ou_num
-                pe.CU_adc_energy           += self.hw_config.Energy_ou_adc      * ou_num
-                pe.CU_shift_and_add_energy += self.hw_config.Energy_ou_ssa      * ou_num
-                
-                pe.CU_IR_energy            += self.hw_config.Energy_ir_in_cu    * ou_num * self.hw_config.OU_h
-                pe.CU_OR_energy += self.hw_config.Energy_or_in_cu * ou_num * self.hw_config.OU_w * self.hw_config.ADC_resolution
-
+                pe.CU_IR_energy            += self.hw_config.Energy_IR  * ou_num * self.hw_config.OU_h
+                pe.CU_dac_energy           += self.hw_config.Energy_DAC * ou_num * self.hw_config.OU_h
+                pe.CU_crossbar_energy      += self.hw_config.Energy_crossbar * ou_num * self.hw_config.OU_h * self.hw_config.OU_w
+                pe.CU_SH_energy            += self.hw_config.Energy_S_H * ou_num * self.hw_config.OU_w
+                pe.CU_adc_energy           += self.hw_config.Energy_ADC * ou_num * self.hw_config.OU_w
+                pe.CU_shift_and_add_energy += self.hw_config.Energy_shift_and_add_in_CU * ou_num * self.hw_config.OU_w
+                pe.CU_OR_energy            += self.hw_config.Energy_OR_in_CU * ou_num * self.hw_config.OU_w
                 self.busy_xb += ou_num
                 
             event.current_number_of_preceding_event += 1 # if current_number_of_preceding_event == 2: cu_op finish
@@ -503,11 +501,11 @@ class Controller(object):
             
             # Energy
             saa_amount = event.inputs
-            pe.Or_energy += self.hw_config.Energy_or * self.input_bit * saa_amount
-            pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * saa_amount
+            pe.Or_energy += self.hw_config.Energy_OR_in_PE * saa_amount
+            # pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * saa_amount
             pe.PE_shift_and_add_energy += self.hw_config.Energy_shift_and_add_in_PE * saa_amount
-            pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * saa_amount
-            pe.Or_energy += self.hw_config.Energy_or * self.input_bit * saa_amount
+            # pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * saa_amount
+            pe.Or_energy += self.hw_config.Energy_OR_in_PE * saa_amount
 
             # Trigger
             for proceeding_index in event.proceeding_event:
@@ -551,8 +549,8 @@ class Controller(object):
             
             # Energy
             act_amount = event.inputs
-            pe.Or_energy += self.hw_config.Energy_or * self.input_bit * act_amount
-            pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * act_amount
+            pe.Or_energy += self.hw_config.Energy_OR_in_PE * act_amount
+            # pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * act_amount
             pe.Activation_energy += self.hw_config.Energy_activation * act_amount
 
             # Trigger
@@ -656,10 +654,10 @@ class Controller(object):
                     K = des_pe.edram_buffer.put(data, data)
                     if K: # kick data out of buffer
                         # TODO: simulate data transfer
-                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit # read
+                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
                         transfer_distance = data_transfer_des[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
                         self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 for pro_event_idx in event.proceeding_event:
@@ -681,8 +679,8 @@ class Controller(object):
                 transfer_distance += abs(data_transfer_des[0] - data_transfer_src[0])
 
                 # Energy
-                self.Total_energy_interconnect += self.hw_config.Energy_router * self.input_bit * num_data * (transfer_distance + 1)
-                self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * num_data * (transfer_distance + 1)
+                self.Total_energy_interconnect += self.hw_config.Energy_router * num_data * (transfer_distance + 1)
+                # self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * num_data * (transfer_distance + 1)
                 
                 nlayer = transfer_data[0][0]
                 if len(transfer_data[0]) == 4:
@@ -761,14 +759,14 @@ class Controller(object):
                     K = des_pe.edram_buffer.put(data, data)
                     if K: # kick data out of buffer
                         # TODO: simulate data transfer
-                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit # read
+                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
                         transfer_distance = des_pe_id[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
                         self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                     # Energy
-                    des_pe.eDRAM_buffer_energy += self.hw_config.Energy_edram_buffer * self.input_bit # write
+                    des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # write
                     start_transfer_cycle = packet.start_transfer_cycle
                     end_transfer_cycle = self.cycle_ctr + 1
                     nlayer = data[0]
@@ -828,8 +826,9 @@ class Controller(object):
 
         self.CU_shift_and_add_energy = 0.
         self.CU_dac_energy           = 0.
-        self.CU_adc_energy           = 0.
         self.CU_crossbar_energy      = 0.
+        self.CU_SH_energy            = 0.
+        self.CU_adc_energy           = 0.
         self.CU_IR_energy            = 0.
         self.CU_OR_energy            = 0.
 
@@ -843,14 +842,16 @@ class Controller(object):
             self.Pooling_energy          += pe.Pooling_energy
             self.CU_shift_and_add_energy += pe.CU_shift_and_add_energy
             self.CU_dac_energy           += pe.CU_dac_energy
-            self.CU_adc_energy           += pe.CU_adc_energy
             self.CU_crossbar_energy      += pe.CU_crossbar_energy
+            self.CU_SH_energy            += pe.CU_SH_energy
+            self.CU_adc_energy           += pe.CU_adc_energy
             self.CU_IR_energy            += pe.CU_IR_energy
             self.CU_OR_energy            += pe.CU_OR_energy
         self.Total_energy = self.eDRAM_buffer_energy + self.Bus_energy + self.PE_shift_and_add_energy + \
                             self.Or_energy + self.Activation_energy + self.Pooling_energy + \
-                            self.CU_shift_and_add_energy + self.CU_dac_energy + self.CU_adc_energy + \
-                            self.CU_crossbar_energy + self.CU_IR_energy + self.CU_OR_energy + \
+                            self.CU_shift_and_add_energy + self.CU_dac_energy + self.CU_crossbar_energy + \
+                            self.CU_SH_energy + self.CU_adc_energy + \
+                            self.CU_IR_energy + self.CU_OR_energy + \
                             self.Total_energy_interconnect + self.Total_energy_fetch
 
         self.output_result()
@@ -886,8 +887,9 @@ class Controller(object):
 
             writer.writerow([])
             writer.writerow(["", "Energy(nJ)"])
-            writer.writerow(["Interconnect", self.Total_energy_interconnect])
             writer.writerow(["Fetch", self.Total_energy_fetch])
+
+            writer.writerow(["Interconnect", self.Total_energy_interconnect])
 
             writer.writerow(["eDRAM Buffer", self.eDRAM_buffer_energy])
             writer.writerow(["Bus", self.Bus_energy])
@@ -900,6 +902,7 @@ class Controller(object):
             writer.writerow(["DAC", self.CU_dac_energy])
             writer.writerow(["ADC", self.CU_adc_energy])
             writer.writerow(["Crossbar Array", self.CU_crossbar_energy])
+            writer.writerow(["S&H", self.CU_SH_energy])
             writer.writerow(["IR", self.CU_IR_energy])
             writer.writerow(["CU's OR", self.CU_OR_energy])
 

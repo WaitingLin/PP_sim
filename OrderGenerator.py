@@ -1182,7 +1182,7 @@ class OrderGenerator(object):
                         pooling_position_idx = (rty_idx, rtx_idx, pey_idx, pex_idx)
                         pooling_preceding_count = 1
                         pooling_amount = len(inputs) # 做幾次
-                        pooling_inputs  = pooling_amount
+                        pooling_inputs  = pooling_amount * pooling_data
                         pooling_outputs = []
                         for pool_inp in inputs:
                             data = pool_inp[0]
