@@ -14,7 +14,7 @@ class HardwareConfig(object):
         self.Xbar_num = 8
         self.Xbar_h = 128
         self.Xbar_w = 128
-        self.OU_h = 9
+        self.OU_h = 9   
         self.OU_w = 8
         self.total_pe_num = self.Router_num * self.PE_num
         
@@ -106,21 +106,21 @@ class HardwareConfig(object):
         
         # mW = 10^-3 nJ/ns
         # Energy consumption (nJ per data)
-        self.Energy_eDRAM_buffer    = self.Power_eDRAM_buffer * 0.001 / 1024
-        self.Energy_eDRAM_to_CU_bus = self.Power_eDRAM_to_CU_bus * 0.001 / 1024
-        self.Energy_activation      = self.Power_activation * 0.001 / 64
-        self.Energy_shift_and_add_in_PE = self.Power_shift_and_add_in_PE * 0.001 / 128
-        self.Energy_pooling   = self.Power_pooling * 0.001 / 1024
-        self.Energy_OR_in_PE  = self.Power_OR_in_PE * 0.001 / 128
-        self.Energy_router = self.Power_router * 0.001 / 128
+        self.Energy_eDRAM_buffer    = self.Power_eDRAM_buffer * 0.1 / 1024
+        self.Energy_eDRAM_to_CU_bus = self.Power_eDRAM_to_CU_bus * 0.1 / 1024
+        self.Energy_activation      = self.Power_activation * 0.1 / 64
+        self.Energy_shift_and_add_in_PE = self.Power_shift_and_add_in_PE * 0.1 / 128
+        self.Energy_pooling   = self.Power_pooling * 0.1 / 1024
+        self.Energy_OR_in_PE  = self.Power_OR_in_PE * 0.1 / 128
+        self.Energy_router = self.Power_router * 0.1 / 128
 
-        self.Energy_DAC = self.Power_DAC * 0.001
-        self.Energy_crossbar = self.Power_crossbar * 0.001 / (128*128) # per cell
-        self.Energy_S_H = self.Power_S_H * 0.001
-        self.Energy_ADC = self.Power_ADC * 0.001 / 128
-        self.Energy_IR =  self.Power_IR * 0.001 / 1024
-        self.Energy_OR_in_CU = self.Power_OR_in_CU * 0.001 / 1024
-        self.Energy_shift_and_add_in_CU =  self.Power_shift_and_add_in_CU * 0.001 / 256
+        self.Energy_DAC = self.Power_DAC * 0.1
+        self.Energy_crossbar = self.Power_crossbar * 0.1 / (128*128) # per cell
+        self.Energy_S_H = self.Power_S_H * 0.1
+        self.Energy_ADC = self.Power_ADC * 0.1 / 128
+        self.Energy_IR =  self.Power_IR * 0.1 / 1024
+        self.Energy_OR_in_CU = self.Power_OR_in_CU * 0.1 / 1024
+        self.Energy_shift_and_add_in_CU =  self.Power_shift_and_add_in_CU * 0.1 / 256
 
         # per operation unit (ou)
         # self.Energy_ou_dac        = self.Power_DAC / self.PE_frequency / self.DAC_num * self.OU_h
