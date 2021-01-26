@@ -32,6 +32,8 @@ class Controller(object):
         self.Computation_order = self.ordergenerator.Computation_order
         print("Computation order length:", len(self.Computation_order))
         self.input_bit = self.ordergenerator.model_info.input_bit
+        self.hw_config.interconnect_step_num *= (self.hw_config.router_flit_size/self.input_bit)
+        self.hw_config.interconnect_step_num = int(self.hw_config.interconnect_step_num)
 
         self.PE_array = dict()
         for rty_idx in range(self.hw_config.Router_num_y):
