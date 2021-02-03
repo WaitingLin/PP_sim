@@ -112,9 +112,9 @@ class HardwareConfig(object):
         
         # mW = 10^-3 nJ/ns
         # Energy consumption (nJ per data)
-        self.Energy_eDRAM_buffer    = self.Power_eDRAM_buffer * 0.001 * self.Latency_eDRAM_buffer  / 1024
+        self.Energy_eDRAM_buffer    =  0.0227307 #self.Power_eDRAM_buffer * 0.001 * self.Latency_eDRAM_buffer  / 1024
         self.Energy_eDRAM_to_CU_bus = self.Power_eDRAM_to_CU_bus * 0.001 * self.Latency_eDRAM_to_CU_bus / 1024
-        self.Energy_IR =  self.Power_IR * 0.001 * self.Latency_IR / 1024
+        self.Energy_IR =  0.00674954 # self.Power_IR * 0.001 * self.Latency_IR / 1024
         self.Energy_DAC = self.Power_DAC * 0.001 * self.Latency_DAC / 1
         self.Energy_crossbar = self.Power_crossbar * 0.001 * self.Latency_crossbar / (128*128) # per cell
         self.Energy_S_H = self.Power_S_H * 0.001 * self.Latency_S_H / 1
@@ -122,8 +122,8 @@ class HardwareConfig(object):
         self.Energy_shift_and_add_in_CU =  self.Power_shift_and_add_in_CU * 0.001 * self.Latency_shift_and_add_in_CU / 256
 
         self.Energy_shift_and_add_in_PE = self.Energy_shift_and_add_in_CU
-        self.Energy_OR_in_CU = self.Power_OR_in_CU * 0.001 * self.Latency_OR_in_CU / 1024
-        self.Energy_OR_in_PE  = self.Power_OR_in_PE *  self.Latency_OR_in_PE * 0.001 / 96
+        self.Energy_OR_in_CU = 0.000844107 # self.Power_OR_in_CU * 0.001 * self.Latency_OR_in_CU / 1024
+        self.Energy_OR_in_PE  = 0.00169408 # self.Power_OR_in_PE *  self.Latency_OR_in_PE * 0.001 / 96
         self.Energy_activation = self.Power_activation * 0.001 * self.Latency_activation / 96
         self.Energy_pooling   = self.Power_pooling * 0.001 * self.Latency_pooling / 1024
         self.Energy_router = self.Power_router * 0.001 * self.Latency_router / 2
