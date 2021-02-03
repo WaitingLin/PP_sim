@@ -112,7 +112,7 @@ class HardwareConfig(object):
         
         # mW = 10^-3 nJ/ns
         # Energy consumption (nJ per access)
-        self.Energy_eDRAM_buffer    =  self.Power_eDRAM_buffer * 0.001 * 1.1816  / 1024
+        self.Energy_eDRAM_buffer    =  self.Power_eDRAM_buffer * 0.001 * 1.1816  / 16 #(block size 32B 16bits input data)
         self.Energy_eDRAM_to_CU_bus = self.Power_eDRAM_to_CU_bus * 0.001 * self.Latency_eDRAM_to_CU_bus / 1024
         self.Energy_IR =  self.Power_IR * 0.001 * 0.8859 / 1024
         self.Energy_DAC = self.Power_DAC * 0.001 * self.Latency_DAC / 1
