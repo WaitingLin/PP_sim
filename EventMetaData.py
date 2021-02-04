@@ -1,7 +1,7 @@
 class EventMetaData:
     __slots__ = ["event_type", "preceding_event_count", "current_number_of_preceding_event",
                  "proceeding_event", "nlayer", "inputs", "outputs", 
-                 "position_idx", "window_id", "isFetch"
+                 "position_idx", "isFetch"
                 ]
     def __init__(self, event_type, position_idx, preceding_event_count, proceeding_event, nlayer, inputs, outputs):
         self.event_type = event_type
@@ -12,7 +12,6 @@ class EventMetaData:
         self.inputs  = inputs
         self.outputs = outputs
         self.position_idx = position_idx
-        self.window_id = None
         self.isFetch = False
 
     def __str__(self):

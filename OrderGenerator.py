@@ -289,7 +289,6 @@ class OrderGenerator(object):
                                 cu_op_outputs = 0
 
                                 event = EventMetaData("cu_operation", cu_op_position_idx, preceding_count, [cu_operation_event_idx+1], nlayer, cu_op_inputs, cu_op_outputs)
-                                event.window_id = window_id
                                 self.Computation_order.append(event)
                                 
                                 self.CU_dependency_idx[cu_id] = cu_operation_event_idx
