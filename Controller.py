@@ -264,13 +264,13 @@ class Controller(object):
                 # Write data
                 for data in edram_write_data:
                     K = pe.edram_buffer.put(data, data)
-                    if K: # kick data out of buffer
-                        # TODO: simulate data transfer
-                        pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                        transfer_distance = pe.position[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    # if K: # kick data out of buffer
+                    #     # TODO: simulate data transfer
+                    #     pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                    #     transfer_distance = pe.position[0]
+                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 #self.check_buffer_pe_set.add(pe)
 
@@ -654,13 +654,13 @@ class Controller(object):
 
                 for data in transfer_data:
                     K = des_pe.edram_buffer.put(data, data)
-                    if K: # kick data out of buffer
-                        # TODO: simulate data transfer
-                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                        transfer_distance = data_transfer_des[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    # if K: # kick data out of buffer
+                    #     # TODO: simulate data transfer
+                    #     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                    #     transfer_distance = data_transfer_des[0]
+                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 for pro_event_idx in event.proceeding_event:
                     pro_event = self.Computation_order[pro_event_idx]
@@ -759,13 +759,13 @@ class Controller(object):
                     pro_event_list = packet.pro_event_list
 
                     K = des_pe.edram_buffer.put(data, data)
-                    if K: # kick data out of buffer
-                        # TODO: simulate data transfer
-                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                        transfer_distance = des_pe_id[0]
-                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    # if K: # kick data out of buffer
+                    #     # TODO: simulate data transfer
+                    #     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                    #     transfer_distance = des_pe_id[0]
+                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                     # Energy
                     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # write
@@ -792,7 +792,6 @@ class Controller(object):
             self.check(self.cycle_ctr+1, self.actived_cycle)
         self.t_inter += time.time() - tt
 
-    
     def check(self, n, arr):
         insertIdx = -1
         for e in arr:
@@ -805,7 +804,6 @@ class Controller(object):
             arr.insert(insertIdx, n)
         else:
             arr.append(n)
-
 
     def record_buffer_util(self):
         # time history
