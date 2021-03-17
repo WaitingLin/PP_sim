@@ -347,7 +347,7 @@ class OrderGenerator(object):
                                 pe_id =  pex_idx + pey_idx * self.hw_config.PE_num_x + \
                                         rtx_idx * self.hw_config.PE_num + rty_idx * self.hw_config.Router_num_x * self.hw_config.PE_num
                                 
-                                can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+                                can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                                 total_write_events = ceil(len(edram_write_data) / can_write_data)
                                 for n in range(total_write_events):
                                     wr_event_idx = len(self.Computation_order)
@@ -450,7 +450,7 @@ class OrderGenerator(object):
                             pe_id =  pex_idx + pey_idx * self.hw_config.PE_num_x + \
                                     rtx_idx * self.hw_config.PE_num + rty_idx * self.hw_config.Router_num_x * self.hw_config.PE_num
                             
-                            can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+                            can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                             total_write_events = ceil(len(edram_write_data) / can_write_data)
                             for n in range(total_write_events):
                                 wr_event_idx = len(self.Computation_order)
@@ -571,8 +571,7 @@ class OrderGenerator(object):
                                   #---Event: edram_wr---#
                                     pe_id =  pex_idx + pey_idx * self.hw_config.PE_num_x + \
                                             rtx_idx * self.hw_config.PE_num + rty_idx * self.hw_config.Router_num_x * self.hw_config.PE_num
-                                    can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
-                                    can_write_data = 1
+                                    can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                                     total_write_events = ceil(len(write_or_transfer_data) / can_write_data)
                                     for n in range(total_write_events):
                                         wr_event_idx = len(self.Computation_order)
@@ -874,7 +873,7 @@ class OrderGenerator(object):
                             for f in pe_filter_processing[pe_pos]["act"]:
                                 edram_write_data.append((nlayer+1, f, 0, 0))
                             
-                            can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+                            can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                             total_write_events = ceil(len(edram_write_data) / can_write_data)
                             for n in range(total_write_events):
                                 wr_event_idx = len(self.Computation_order)
@@ -965,7 +964,7 @@ class OrderGenerator(object):
                             edram_write_data.append((nlayer, f, 0, 0, pe_pos))
                         
 
-                        can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+                        can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                         total_write_events = ceil(len(edram_write_data) / can_write_data)
                         for n in range(total_write_events):
                             wr_event_idx = len(self.Computation_order)
@@ -1086,7 +1085,7 @@ class OrderGenerator(object):
 
                             if nlayer == self.model_info.layer_length-1: # 最後一層直接寫到eDRAM
                                #---Event: edram_wr---#
-                                can_write_data = floor(self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
+                                can_write_data = self.hw_config.eDRAM_buffer_rd_wr_data_per_cycle
                                 total_write_events = ceil(len(write_or_transfer_data) / can_write_data)
                                 for n in range(total_write_events):
                                     wr_event_idx = len(self.Computation_order)

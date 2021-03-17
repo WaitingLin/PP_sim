@@ -26,6 +26,8 @@ class Controller(object):
             self.isPipeLine = False      
 
         self.record_PE = False
+        self.record_CU = False
+        self.record_XB = False
         self.record_layer = False
         
         self.mp_info = ordergenerator.mp_info
@@ -63,9 +65,13 @@ class Controller(object):
 
         # Utilization
         if self.record_PE:
-            self.pe_state_for_plot = [0] # [{PE1, PE2}, {PE1, PE2}, {PE1}, {PE1}, ...]
+            self.pe_state_for_plot = [0] # [{PE0: {0, 1}}, {PE1: {0}}, ...]
+        if self.record_CU:
+            self.cu_state_for_plot = [0] # [{CU1, CU2, CU3}], {CU1, CU2}, ...]
+        if self.record_XB:
+            self.xb_state_for_plot = [0] # [{XB1, XB2}, ...]
         if self.record_layer:
-            self.layer_state_for_plot = [0] # [{layer0, layer1}, {layer0}, {layer0, layer1}...]
+            self.layer_state_for_plot = [0] # [{layer0, layer1}, {layer0}, {layer0, layer1}], ...]
         
         # Pipeline control
         if not self.isPipeLine: # Non_pipeline
@@ -104,9 +110,6 @@ class Controller(object):
 
         self.actived_cycle = [1]
 
-        self.run()
-        self.print_statistics_result()
-
     def run(self):
         for event in self.Computation_order:
             if event.nlayer != 0:
@@ -140,10 +143,24 @@ class Controller(object):
             self.cycle_ctr = self.actived_cycle.pop(0)
 
             if self.record_PE:
-                if len(self.pe_state_for_plot) == self.cycle_ctr:
-                    self.pe_state_for_plot.append(set())
+                if len(self.pe_state_for_plot) <= self.cycle_ctr:
+                    for i in range(self.cycle_ctr - len(self.pe_state_for_plot)):
+                        self.pe_state_for_plot.append(0)
+                    self.pe_state_for_plot.append(dict())
+            if self.record_CU:
+                if len(self.cu_state_for_plot) <= self.cycle_ctr:
+                    for i in range(self.cycle_ctr - len(self.cu_state_for_plot)):
+                        self.cu_state_for_plot.append(0)
+                    self.cu_state_for_plot.append(set())
+            if self.record_XB:
+                if len(self.xb_state_for_plot) <= self.cycle_ctr:
+                    for i in range(self.cycle_ctr - len(self.xb_state_for_plot)):
+                        self.xb_state_for_plot.append(0)
+                    self.xb_state_for_plot.append(set())
             if self.record_layer:
-                if len(self.layer_state_for_plot) == self.cycle_ctr:
+                if len(self.layer_state_for_plot) <= self.cycle_ctr:
+                    for i in range(self.cycle_ctr - len(self.layer_state_for_plot)):
+                        self.layer_state_for_plot.append(0)
                     self.layer_state_for_plot.append(set())
 
             if self.trace:
@@ -194,8 +211,8 @@ class Controller(object):
         if self.cycle_ctr in self.Trigger:
             for trigger in self.Trigger[self.cycle_ctr]:
                 pe, event = trigger[0], trigger[1]
-                if self.trace:
-                    print(f"\tTrigger {event.event_type}: {self.Computation_order.index(event)}")
+                # if self.trace:
+                #     print(f"\tTrigger {event.event_type}: {self.Computation_order.index(event)}")
                 
                 if event.event_type == "edram_rd_ir" or event.event_type == "edram_rd" or event.event_type == "edram_wr":
                     pe.edram_erp.append(event)
@@ -217,8 +234,8 @@ class Controller(object):
                                     pe.pe_saa_erp.append(pro_event)
                                     self.pe_saa_pe_idx.add(pe)
                                 elif pro_event.event_type == "edram_rd_ir":
-                                        pe.edram_erp.append(pro_event)
-                                        self.edram_pe_idx.add(pe)
+                                    pe.edram_erp.append(pro_event)
+                                    self.edram_pe_idx.add(pe)
                     
                 elif event.event_type == "activation":
                     pe.activation_erp.append(event)
@@ -261,16 +278,17 @@ class Controller(object):
                 num_data = len(edram_write_data)
                 pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer * num_data
 
+                # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_eDRAM_buffer * num_data
+
                 # Write data
                 for data in edram_write_data:
                     K = pe.edram_buffer.put(data, data)
-                    # if K: # kick data out of buffer
-                    #     # TODO: simulate data transfer
-                    #     pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                    #     transfer_distance = pe.position[0]
-                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    if K: # kick data out of buffer
+                        pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                        transfer_distance = pe.position[0]
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 #self.check_buffer_pe_set.add(pe)
 
@@ -290,7 +308,10 @@ class Controller(object):
                             self.check(finish_cycle, self.actived_cycle)
 
                 if self.record_PE: # PE util
-                    self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                    if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                        self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                    else:
+                        self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
                 if self.record_layer: # layer
                     self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
@@ -333,26 +354,34 @@ class Controller(object):
                     pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer * num_data # eDRAM read
                     pe.Bus_energy          += self.hw_config.Energy_eDRAM_to_CU_bus * num_data # bus
                     pe.CU_IR_energy        += self.hw_config.Energy_IR * num_data # IR write
+
+                    # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_eDRAM_buffer * num_data # eDRAM read
+                    # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_eDRAM_to_CU_bus * num_data # bus
+                    # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_IR * num_data # IR write
                     
-                    # Trigger: CU operation
-                    finish_cycle = self.cycle_ctr + self.hw_config.eDRAM_buffer_read_to_IR_cycles
+                    # Trigger
                     for proceeding_index in event.proceeding_event:
                         pro_event = self.Computation_order[proceeding_index]
                         pro_event.current_number_of_preceding_event += 1
 
                         if pro_event.preceding_event_count == pro_event.current_number_of_preceding_event:
+                            if pro_event.event_type == "cu_operation":
+                                finish_cycle = self.cycle_ctr + self.hw_config.eDRAM_buffer_read_to_IR_cycles
+                            else:
+                                finish_cycle = self.cycle_ctr + 1
                             if finish_cycle not in self.Trigger:
                                 self.Trigger[finish_cycle] = [[pe, pro_event]]
                             else:
                                 self.Trigger[finish_cycle].append([pe, pro_event])
                             self.check(finish_cycle, self.actived_cycle)
                     
-                    # PE util
-                    if self.record_PE:
-                        self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                    if self.record_PE: # PE util
+                        if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                            self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                        else:
+                            self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
-                    # layer
-                    if self.record_layer:
+                    if self.record_layer: # layer
                         self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
 
             elif event.event_type == "edram_rd":
@@ -408,13 +437,14 @@ class Controller(object):
                                 else:
                                     self.Trigger[finish_cycle].append([pe, pro_event])     
                                 self.check(finish_cycle, self.actived_cycle)
-                        
-                    # PE util
-                    if self.record_PE:
-                        self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                    
+                    if self.record_PE: # PE util
+                        if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                            self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                        else:
+                            self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
-                    # layer
-                    if self.record_layer:
+                    if self.record_layer: # layer
                         self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
 
             if pe.edram_erp:
@@ -430,6 +460,7 @@ class Controller(object):
         tt = time.time()
         for pe in self.cu_operation_pe_idx:
             event = pe.cu_op_erp
+            cu_id = event.position_idx[4]
             pe.cu_op_erp = 0
             
             if self.trace:
@@ -451,6 +482,18 @@ class Controller(object):
                 pe.CU_shift_and_add_energy += self.hw_config.Energy_shift_and_add_in_CU * ou_num * self.hw_config.OU_w
                 pe.CU_OR_energy            += self.hw_config.Energy_OR_in_CU * ou_num * self.hw_config.OU_w
                 self.busy_xb += ou_num
+
+                # for c in range(16):
+                #     t = self.cycle_ctr + c
+                #     self.energy_consumption_each_cycle[t] += self.hw_config.Energy_IR * self.hw_config.OU_h
+                #     self.energy_consumption_each_cycle[t] += self.hw_config.Energy_DAC * self.hw_config.OU_h
+                #     self.energy_consumption_each_cycle[t] += self.hw_config.Energy_crossbar * self.hw_config.OU_h * self.hw_config.OU_w
+                #     self.energy_consumption_each_cycle[t] += self.hw_config.Energy_S_H * self.hw_config.OU_w
+
+                #     self.energy_consumption_each_cycle[t+1] += self.hw_config.Energy_ADC * self.hw_config.OU_w
+
+                #     self.energy_consumption_each_cycle[t+2] += self.hw_config.Energy_shift_and_add_in_CU * self.hw_config.OU_w
+                #     self.energy_consumption_each_cycle[t+2] += self.hw_config.Energy_OR_in_CU * self.hw_config.OU_w
                 
             event.current_number_of_preceding_event += 1 # if current_number_of_preceding_event == 2: cu_op finish
             total_cycles = event.inputs[0]
@@ -469,14 +512,41 @@ class Controller(object):
             else:
                 self.Trigger[finish_cycle].append([pe, event])
             self.check(finish_cycle, self.actived_cycle)
-                        
+
             if self.record_PE: # PE util
+                if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                    self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                else:
+                    self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
+
                 for cycle in range(len(self.pe_state_for_plot), finish_cycle+1):
-                    self.pe_state_for_plot.append(set())
+                    self.pe_state_for_plot.append({})
                 for cycle in range(self.cycle_ctr, finish_cycle+1):
-                    self.pe_state_for_plot[cycle].add(pe)
+                    if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                        self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                    else:
+                        self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
             
+            if self.record_CU: # CU util
+                cu_plot_id = pe.plot_idx*self.hw_config.CU_num+cu_id
+                self.cu_state_for_plot[self.cycle_ctr].add(cu_plot_id)
+                for cycle in range(len(self.cu_state_for_plot), finish_cycle+1):
+                    self.cu_state_for_plot.append(set())
+                for cycle in range(self.cycle_ctr, finish_cycle+1):
+                    self.cu_state_for_plot[cycle].add(cu_plot_id)
+            
+            if self.record_XB: # XB util
+                for cycle in range(len(self.xb_state_for_plot), finish_cycle+1):
+                    self.xb_state_for_plot.append(set())
+                for xb_idx in ou_num_dict:
+                    ou_num = ou_num_dict[xb_idx]
+                    xb_plot_id = pe.plot_idx*self.hw_config.CU_num*self.hw_config.Xbar_num + cu_id*self.hw_config.Xbar_num + xb_idx
+                    self.xb_state_for_plot[self.cycle_ctr].add(xb_plot_id)
+                    for cycle in range(self.cycle_ctr, ou_num+3):
+                        self.xb_state_for_plot[cycle].add(xb_plot_id)
+
             if self.record_layer: # layer
+                self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
                 for cycle in range(len(self.layer_state_for_plot), finish_cycle):
                     self.layer_state_for_plot.append(set())
                 for cycle in range(self.cycle_ctr, finish_cycle):
@@ -509,6 +579,10 @@ class Controller(object):
             # pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * saa_amount
             pe.Or_energy += self.hw_config.Energy_OR_in_PE * saa_amount
 
+            # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_OR_in_PE * saa_amount
+            # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_shift_and_add_in_PE * saa_amount
+            # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_OR_in_PE * saa_amount
+
             # Trigger
             for proceeding_index in event.proceeding_event:
                 pro_event = self.Computation_order[proceeding_index]
@@ -523,7 +597,10 @@ class Controller(object):
                     self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
-                self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                    self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                else:
+                    self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
             if self.record_layer: # layer
                 self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
@@ -555,6 +632,10 @@ class Controller(object):
             # pe.Bus_energy += self.hw_config.Energy_bus * self.input_bit * act_amount
             pe.Activation_energy += self.hw_config.Energy_activation * act_amount
 
+            
+            # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_OR_in_PE * act_amount
+            # self.energy_consumption_each_cycle[self.cycle_ctr] += self.hw_config.Energy_OR_in_PE * act_amount
+
             # Trigger
             for proceeding_index in event.proceeding_event:
                 pro_event = self.Computation_order[proceeding_index]
@@ -567,7 +648,10 @@ class Controller(object):
                 self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
-                self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                    self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                else:
+                    self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
             if self.record_layer: # layer
                 self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
@@ -614,7 +698,10 @@ class Controller(object):
                     self.check(finish_cycle, self.actived_cycle)
             
             if self.record_PE: # PE util
-                self.pe_state_for_plot[self.cycle_ctr].add(pe)
+                if pe in self.pe_state_for_plot[self.cycle_ctr]:
+                    self.pe_state_for_plot[self.cycle_ctr][pe].add(event.nlayer)
+                else:
+                    self.pe_state_for_plot[self.cycle_ctr][pe] = {event.nlayer}
 
             if self.record_layer: # layer
                 self.layer_state_for_plot[self.cycle_ctr].add(event.nlayer)
@@ -654,13 +741,12 @@ class Controller(object):
 
                 for data in transfer_data:
                     K = des_pe.edram_buffer.put(data, data)
-                    # if K: # kick data out of buffer
-                    #     # TODO: simulate data transfer
-                    #     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                    #     transfer_distance = data_transfer_des[0]
-                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    if K: # kick data out of buffer
+                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                        transfer_distance = data_transfer_des[0]
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                 for pro_event_idx in event.proceeding_event:
                     pro_event = self.Computation_order[pro_event_idx]
@@ -759,13 +845,12 @@ class Controller(object):
                     pro_event_list = packet.pro_event_list
 
                     K = des_pe.edram_buffer.put(data, data)
-                    # if K: # kick data out of buffer
-                    #     # TODO: simulate data transfer
-                    #     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
-                    #     transfer_distance = des_pe_id[0]
-                    #     self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
-                    #     #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
-                    #     self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
+                    if K: # kick data out of buffer
+                        des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # read
+                        transfer_distance = des_pe_id[0]
+                        self.Total_energy_interconnect += self.hw_config.Energy_router * (transfer_distance + 1)
+                        #self.Total_energy_interconnect += self.hw_config.Energy_link   * self.input_bit * (transfer_distance + 1)
+                        self.Total_energy_fetch += self.hw_config.Energy_off_chip_Wr * self.input_bit
 
                     # Energy
                     des_pe.eDRAM_buffer_energy += self.hw_config.Energy_eDRAM_buffer # write
@@ -859,27 +944,33 @@ class Controller(object):
         # self.PE_energy_breakdown()
         self.miss_rate()
         if self.record_PE: # PE util
-            print("output pe utilization...")
+            print("output PE utilization...")
             self.pe_utilization()
+        if self.record_CU: # CU util
+            print("output CU utilization...")
+            self.cu_utilization()
+        if self.record_XB: # XB util
+            print("output XB utilization...")
+            self.xb_utilization()
         if self.record_layer: # layer
-            print("output layer utilization...")
-            self.layer_utilization()
+            print("output layer behavior...")
+            self.layer_behavior()
         
     def output_result(self):
-        overlap_layer_ctr = 0
-        layers_per_cycle_ctr = 0
-        if self.record_layer: # layer
-            for cycle in range(1, len(self.layer_state_for_plot)):
-                if len(self.layer_state_for_plot[cycle]) > 1:
-                    overlap_layer_ctr += 1
-                layers_per_cycle_ctr += len(self.layer_state_for_plot[cycle])
+        # overlap_layer_ctr = 0
+        # layers_per_cycle_ctr = 0
+        # if self.record_layer: # layer
+        #     for cycle in range(1, len(self.layer_state_for_plot)):
+        #         if len(self.layer_state_for_plot[cycle]) > 1:
+        #             overlap_layer_ctr += 1
+        #         layers_per_cycle_ctr += len(self.layer_state_for_plot[cycle])
 
         
         with open(self.path+'/Result.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["overlap_layer_ctr", overlap_layer_ctr])
-            writer.writerow(["overlap_layer_ctr/Cycles", overlap_layer_ctr/self.cycle_ctr])
-            writer.writerow(["layers_per_cycle_ctr", layers_per_cycle_ctr/self.cycle_ctr])
+            # writer.writerow(["overlap_layer_ctr", overlap_layer_ctr])
+            # writer.writerow(["overlap_layer_ctr/Cycles", overlap_layer_ctr/self.cycle_ctr])
+            # writer.writerow(["layers_per_cycle_ctr", layers_per_cycle_ctr/self.cycle_ctr])
         
             writer.writerow([])
             writer.writerow(["Cycles", self.cycle_ctr])
@@ -979,7 +1070,7 @@ class Controller(object):
     def buffer_analysis(self):
         with open(self.path+'/Buffer_utilization.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
-            writer.writerow(["", "SUM(KB)", "", "tmp_data", "fm_data"])
+            writer.writerow(["", "SUM(KB)", "", "intermediate data", "feature map data"])
             for pe_pos in self.PE_array:
                 pe  = self.PE_array[pe_pos]
                 buf = pe.edram_buffer.buffer
@@ -1025,19 +1116,46 @@ class Controller(object):
                     writer.writerow(arr)
 
     def pe_utilization(self):
+        l = [0]
+        for nlayer in range(self.ordergenerator.model_info.layer_length):
+            l.append(None)
         with open(self.path+'/PE_utilization.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
+            arr = [""]
+            for nlayer in range(self.ordergenerator.model_info.layer_length):
+                arr.append("layer "+ str(nlayer))
+            writer.writerow(arr)
             for cycle in range(1, len(self.pe_state_for_plot)):
                 if self.pe_state_for_plot[cycle]:
                     for pe in self.pe_state_for_plot[cycle]:
                         plot_idx = pe.plot_idx
-                        writer.writerow([cycle, plot_idx])
+                        arr = l.copy()
+                        arr[0] = cycle
+                        for layer in self.pe_state_for_plot[cycle][pe]:
+                            arr[layer+1] = plot_idx
+                        writer.writerow(arr)
+    
+    def cu_utilization(self):
+        with open(self.path+'/CU_utilization.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for cycle in range(1, len(self.cu_state_for_plot)):
+                if self.cu_state_for_plot[cycle]:
+                    for cu in self.cu_state_for_plot[cycle]:
+                        writer.writerow([cycle, cu])
+    
+    def xb_utilization(self):
+        with open(self.path+'/XB_utilization.csv', 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile)
+            for cycle in range(1, len(self.xb_state_for_plot)):
+                if self.xb_state_for_plot[cycle]:
+                    for cu in self.xb_state_for_plot[cycle]:
+                        writer.writerow([cycle, cu])
 
-    def layer_utilization(self):
-        with open(self.path+'/Layer_utilization.csv', 'w', newline='') as csvfile:
+    def layer_behavior(self):
+        with open(self.path+'/Layer_behavior.csv', 'w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             for cycle in range(1, len(self.layer_state_for_plot)):
                 if self.layer_state_for_plot[cycle]:
                     for layer in self.layer_state_for_plot[cycle]:
                         writer.writerow([cycle, layer])
-    
+

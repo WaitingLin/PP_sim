@@ -21,7 +21,7 @@ def main():
     model_config = ModelConfig(model)
     model_info = Model(model_config)
     hw_config = HardwareConfig(buffer_size)
-    hw_config.eDRAM_buffer_rd_wr_data_per_cycle = int(hw_config.eDRAM_buffer_bandwidth * 8 // model_info.input_bit * hw_config.cycle_time)
+    hw_config.eDRAM_buffer_rd_wr_data_per_cycle = int(hw_config.eDRAM_buffer_bandwidth * 8 / model_info.input_bit * hw_config.cycle_time)
     hw_config.eDRAM_buffer_read_to_IR_cycles = math.ceil(hw_config.Xbar_h * hw_config.Xbar_num / hw_config.eDRAM_buffer_rd_wr_data_per_cycle)
 
     LoadOrder = True
@@ -46,6 +46,8 @@ def main():
         if model == "Lenet":
             cant_use_pe = (0, 1, 1, 0)
         elif model == "Cifar10":
+            cant_use_pe = (0, 1, 0, 1)
+        elif model == "Cifar10-2":
             cant_use_pe = (0, 1, 0, 1)
         elif model == "DeepID":
             cant_use_pe = (0, 1, 1, 0)
@@ -145,6 +147,9 @@ def main():
     start_simulation_time = time.time()
     print("--- Power and performance simulation---")
     controller = Controller(model_config, hw_config, order_generator, mapping_str, scheduling, path, isTrace_controller, isLog)
+    
+    controller.run()
+    controller.print_statistics_result()
     end_simulation_time = time.time()
     print("--- Simulate in %s seconds ---\n" % (end_simulation_time - start_simulation_time))
 

@@ -46,7 +46,7 @@ class HardwareConfig(object):
         self.SH_num_in_CU = 1024
         self.cell_bit_width = 2
         self.ADC_num = 8
-        self.ADC_resolution = 3
+        self.ADC_resolution = 4
         self.shift_and_add_num_in_CU = 4
         self.IR_size = 2 # KB
         self.OR_size_in_CU = 256 # B
