@@ -124,29 +124,42 @@ class OrderGenerator(object):
                                         operate_filter.add(f)
                     pe_operate_filter[pe_pos] = operate_filter
                 
-                filter_operated_pe = [] # {[[PE1, PE2], [PE1, PE2], ...}
+                filter_aggregator = [] # {"aggregator": PE1, "other": [PE2, PE3]}
                 for f in range(self.model_info.filter_n[nlayer]):
-                    d = []
+                    aggregator_dict = {"aggregator": 0, "non": []}
                     for pe_pos in pe_operate_filter:
                         if f in pe_operate_filter[pe_pos]:
-                            d.append(pe_pos)
-                    filter_operated_pe.append(d)
-                
-                filter_aggregator = [] # {"aggregator": PE1, "other": [PE2, PE3]}
-                a = 0
-                for f in range(self.model_info.filter_n[nlayer]):
-                    op_pe_list = filter_operated_pe[f]
-                    aggregator_dict = {"aggregator": 0, "non": []}
-                    if a >= len(op_pe_list):
-                        a = 0
-                    for idx in range(len(op_pe_list)):
-                        pe_pos = op_pe_list[idx]
-                        if idx == a:
-                            aggregator_dict["aggregator"] = pe_pos
-                        else:
-                            aggregator_dict["non"].append(pe_pos)
-                    a += 1
+                            if aggregator_dict["aggregator"] == 0:
+                                aggregator_dict["aggregator"] = pe_pos # 隨機指定一個PE當aggregator
+                            else:
+                                aggregator_dict["non"].append(pe_pos)
                     filter_aggregator.append(aggregator_dict)
+
+
+                # 分散 #
+                # filter_operated_pe = [] # {[[PE1, PE2], [PE1, PE2], ...}
+                # for f in range(self.model_info.filter_n[nlayer]):
+                #     d = []
+                #     for pe_pos in pe_operate_filter:
+                #         if f in pe_operate_filter[pe_pos]:
+                #             d.append(pe_pos)
+                #     filter_operated_pe.append(d)
+                
+                # filter_aggregator = [] # {"aggregator": PE1, "other": [PE2, PE3]}
+                # a = 0
+                # for f in range(self.model_info.filter_n[nlayer]):
+                #     op_pe_list = filter_operated_pe[f]
+                #     aggregator_dict = {"aggregator": 0, "non": []}
+                #     if a >= len(op_pe_list):
+                #         a = 0
+                #     for idx in range(len(op_pe_list)):
+                #         pe_pos = op_pe_list[idx]
+                #         if idx == a:
+                #             aggregator_dict["aggregator"] = pe_pos
+                #         else:
+                #             aggregator_dict["non"].append(pe_pos)
+                #     a += 1
+                #     filter_aggregator.append(aggregator_dict)
 
                 # 完成pe_filter_processing
                 for pe_pos in pe_operate_filter:
