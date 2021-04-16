@@ -50,9 +50,9 @@ class PE(object):
         self.CU_OR_energy            = 0.
 
         ### CU state
-        self.cu_state = []
-        for i in range(self.hw_config.CU_num):
-            self.cu_state.append(False)
+        # self.cu_state = []
+        # for i in range(self.hw_config.CU_num):
+        #     self.cu_state.append(False)
 
     def __str__(self):
         return str(self.__dict__)

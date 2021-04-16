@@ -62,7 +62,6 @@ class HardwareConfig(object):
         self.Power_eDRAM_buffer    = 20.7
         self.Power_eDRAM_to_CU_bus = 7
         self.Power_activation      = 0.52 / self.activation_num
-        # self.Power_shift_and_add_in_PE = 0.05 / self.shift_and_add_num_in_PE
         self.Power_pooling  = 0.4 / self.pooling_num
         self.Power_OR_in_PE = 1.68
         self.Power_router   = 42
@@ -74,23 +73,6 @@ class HardwareConfig(object):
         self.Power_ADC = 16 / self.ADC_num * (2**self.ADC_resolution / (self.ADC_resolution+1)) / (2**8/(8+1)) # scaling
         self.Power_OR_in_CU = 0.23
         self.Power_shift_and_add_in_CU = 0.2 / self.shift_and_add_num_in_CU
-
-        # Leakage
-        self.Leakage_eDRAM_buffer = 0
-        self.Leakage_eDRAM_to_CU_bus = 0
-        self.Leakage_activation = 0
-        self.Leakage_shift_and_add_in_PE = 0
-        self.Leakage_pooling = 0
-        self.Leakage_OR_in_PE = 0
-        self.Leakage_router = 0
-
-        self.Leakage_DAC = 0
-        self.Leakage_crossbar = 0
-        self.Leakage_S_H = 0
-        self.Leakage_ADC = 0
-        self.Leakage_IR =  0
-        self.Leakage_OR_in_CU = 0
-        self.Leakage_shift_and_add_in_CU = 0
 
         # Latency
         self.Latency_eDRAM_buffer = 100 - 1/1.2 - 1/1.2
